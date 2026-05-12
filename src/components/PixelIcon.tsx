@@ -46,7 +46,6 @@ export function PixelIcon({ grid, cellSize = 5, className = '' }: PixelIconProps
 const _ = ''
 const F = '#2D3047'  // frame charcoal
 const S = '#4D96FF'  // sky blue
-const Y = '#FFD93D'  // sun yellow
 const M = '#9B72CB'  // mountain lavender
 const W = '#FFFFFF'  // white / snow
 const G = '#6BCB77'  // grass green
