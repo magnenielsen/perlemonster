@@ -11,8 +11,6 @@ interface BeadGridProps {
   cellSize?: number
 }
 
-const GRID_SIZE = 29
-
 function contrastText(hex: string): string {
   const n = parseInt(hex.slice(1), 16)
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
@@ -35,7 +33,8 @@ export function BeadGrid({ grid, palette, editMode, selectedColor, onCellPaint, 
 
   const handleMouseUp = useCallback(() => { isPainting.current = false }, [])
 
-  const gridPx = GRID_SIZE * cellSize
+  const rows = grid.length
+  const cols = grid[0]?.length ?? 0
 
   return (
     <div
@@ -47,10 +46,10 @@ export function BeadGrid({ grid, palette, editMode, selectedColor, onCellPaint, 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${GRID_SIZE}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${GRID_SIZE}, ${cellSize}px)`,
-          width: gridPx,
-          height: gridPx,
+          gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
+          gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
+          width: cols * cellSize,
+          height: rows * cellSize,
           border: '2px solid #e5e7eb',
           borderRadius: 8,
           overflow: 'hidden',

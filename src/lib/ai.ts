@@ -1,5 +1,6 @@
-import { parseClaudeResponse } from './grid'
 import type { ParsedPattern } from './grid'
+import type { PerlerColor } from './palette'
+import type { Grid } from './quantize'
 
 export interface GenerateRequest {
   mood: string[]
@@ -26,8 +27,22 @@ export async function generatePattern(req: GenerateRequest): Promise<ParsedPatte
 
   const data = await res.json()
 
-  // data has { palette, grid, title } in Claude's schema
-  return parseClaudeResponse(JSON.stringify(data))
+  const palette: PerlerColor[] = (data.palette as Array<{ code: string; name: string; hex: string }>).map(p => ({
+    code: p.code,
+    name: p.name,
+    hex: p.hex,
+  }))
+  const rows = (data.grid as string).split('\n').filter((r: string) => r.length > 0)
+  const size = rows.length
+  const grid: Grid = rows.map(row => {
+    const chars = [...row].slice(0, size)
+    while (chars.length < size) chars.push('A')
+    return chars.map(ch => {
+      const idx = ch.charCodeAt(0) - 65
+      return Math.max(0, Math.min(idx, palette.length - 1))
+    })
+  })
+  return { grid, palette, title: data.title as string | undefined }
 }
 
 export class RateLimitError extends Error {
