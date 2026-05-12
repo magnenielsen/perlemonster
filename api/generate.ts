@@ -99,7 +99,8 @@ Generate the pattern.`
       }),
     })
 
-    const text = response.content.find(b => b.type === 'text')?.text ?? ''
+    const raw = response.content.find(b => b.type === 'text')?.text ?? ''
+    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
     const parsed = JSON.parse(text)
 
     // Validate structure

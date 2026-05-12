@@ -93,13 +93,6 @@ export function Mascot({ mood = 'idle', size = 120, className = '' }: MascotProp
         </>
       )}
 
-      {/* Drawing: pencil doodle in corner */}
-      {mood === 'drawing' && (
-        <g transform={`translate(${svgW * 0.72}, ${svgH * 0.6})`}>
-          <rect x={0} y={0} width={36} height={10} rx={3} fill="#FF6B6B" />
-          <polygon points="36,0 46,5 36,10" fill="#FFD93D" />
-        </g>
-      )}
     </svg>
   )
 }
