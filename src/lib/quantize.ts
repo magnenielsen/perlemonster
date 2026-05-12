@@ -1,0 +1,110 @@
+import { rgbToLab, nearestPerlerIndex, PALETTE } from './palette'
+import type { PerlerColor } from './palette'
+
+export type Grid = number[][] // 29x29, each value is index into active palette
+
+export interface QuantizeResult {
+  grid: Grid
+  palette: PerlerColor[] // subset of PALETTE actually used
+}
+
+const GRID_SIZE = 29
+
+function randomInt(n: number): number {
+  return Math.floor(Math.random() * n)
+}
+
+// k-means clustering in LAB space
+function kmeans(pixels: [number, number, number][], k: number, iterations = 20): number[] {
+  const n = pixels.length
+  // Init centroids with k-means++ style (random picks)
+  const centroids: [number, number, number][] = []
+  centroids.push(pixels[randomInt(n)])
+  while (centroids.length < k) {
+    centroids.push(pixels[randomInt(n)])
+  }
+
+  let assignments = new Int32Array(n)
+
+  for (let iter = 0; iter < iterations; iter++) {
+    // Assignment step
+    for (let i = 0; i < n; i++) {
+      let best = 0, bestDist = Infinity
+      for (let c = 0; c < k; c++) {
+        const dx = pixels[i][0] - centroids[c][0]
+        const dy = pixels[i][1] - centroids[c][1]
+        const dz = pixels[i][2] - centroids[c][2]
+        const d = dx*dx + dy*dy + dz*dz
+        if (d < bestDist) { bestDist = d; best = c }
+      }
+      assignments[i] = best
+    }
+
+    // Update step
+    const sums: [number, number, number][] = Array.from({ length: k }, () => [0, 0, 0])
+    const counts = new Int32Array(k)
+    for (let i = 0; i < n; i++) {
+      const c = assignments[i]
+      sums[c][0] += pixels[i][0]
+      sums[c][1] += pixels[i][1]
+      sums[c][2] += pixels[i][2]
+      counts[c]++
+    }
+    for (let c = 0; c < k; c++) {
+      if (counts[c] > 0) {
+        centroids[c] = [sums[c][0]/counts[c], sums[c][1]/counts[c], sums[c][2]/counts[c]]
+      }
+    }
+  }
+
+  // Map each centroid to nearest Perler palette index
+  const centroidPerlerIdx = centroids.map(lab => nearestPerlerIndex(lab))
+
+  // Build final assignments as Perler palette indices
+  return Array.from(assignments).map(c => centroidPerlerIdx[c])
+}
+
+export function quantizeImageData(
+  imageData: ImageData,
+  colorCount: 8 | 15 | 30,
+  _style: 'glatt' | 'skarp' // dithering applied before calling this
+): QuantizeResult {
+  const { data, width, height } = imageData
+  const pixels: [number, number, number][] = []
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4
+      pixels.push(rgbToLab(data[idx], data[idx+1], data[idx+2]))
+    }
+  }
+
+  const perlerIndices = kmeans(pixels, colorCount)
+
+  // Build grid (downsampled to GRID_SIZE x GRID_SIZE)
+  // imageData should already be 29x29, but handle generic size too
+  const sw = width / GRID_SIZE
+  const sh = height / GRID_SIZE
+
+  const usedIndices = new Set<number>(perlerIndices)
+  const globalToLocal = new Map<number, number>()
+  const activePalette: PerlerColor[] = []
+  usedIndices.forEach(gi => {
+    globalToLocal.set(gi, activePalette.length)
+    activePalette.push(PALETTE[gi])
+  })
+
+  const grid: Grid = []
+  for (let row = 0; row < GRID_SIZE; row++) {
+    const rowArr: number[] = []
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const px = Math.min(Math.floor(col * sw + sw/2), width - 1)
+      const py = Math.min(Math.floor(row * sh + sh/2), height - 1)
+      const pixelIdx = py * width + px
+      rowArr.push(globalToLocal.get(perlerIndices[pixelIdx]) ?? 0)
+    }
+    grid.push(rowArr)
+  }
+
+  return { grid, palette: activePalette }
+}
