@@ -1,5 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — esbuild bundles JSON natively; no assertion needed
+import perlerColors from '../public/palette/perler-colors.json'
 
 // --- Closed vocabularies ---
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul', 'magisk', 'snill'])
@@ -24,8 +27,6 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
   return { allowed: true, remaining: MAX_PER_DAY - entry.count }
 }
 
-// Perler palette — load from filesystem (bundled by Vercel)
-import perlerColors from '../public/palette/perler-colors.json' assert { type: 'json' }
 
 const SYSTEM_PROMPT = `You are a pixel-art designer creating 29×29 bead patterns for a 7–10 year old child's Perler bead project.
 

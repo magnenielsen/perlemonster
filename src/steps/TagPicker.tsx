@@ -1,8 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { t } from '../i18n/no'
 import { generatePattern, RateLimitError } from '../lib/ai'
 import type { ParsedPattern } from '../lib/grid'
 import { Mascot } from '../components/Mascot'
+
+const POP_POSITIONS = [
+  { left: '12%' }, { left: '30%' }, { left: '52%' }, { left: '68%' }, { left: '82%' },
+]
+
+function LoadingScreen() {
+  const [xIdx, setXIdx] = useState(0)
+  const [visible, setVisible] = useState(true)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const tick = setInterval(() => setProgress(p => Math.min(p + 0.7, 92)), 100)
+    return () => clearInterval(tick)
+  }, [])
+
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setXIdx(i => (i + 1) % POP_POSITIONS.length)
+        setVisible(true)
+      }, 350)
+    }, 1800)
+    return () => clearInterval(cycle)
+  }, [])
+
+  return (
+    <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center gap-10"
+      style={{ background: '#FFF8F0' }}>
+      {/* Popping mascot */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: POP_POSITIONS[xIdx].left,
+        transition: 'left 0s, opacity 0.3s, transform 0.3s',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(40px)',
+      }}>
+        <Mascot mood="drawing" size={130} />
+      </div>
+
+      {/* Text + progress */}
+      <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.8rem', color: '#9B72CB', zIndex: 1 }}>
+        {t.tagGenerating}
+      </p>
+      <div style={{ width: 260, height: 18, background: '#E8D5FF', borderRadius: 999, overflow: 'hidden', zIndex: 1 }}>
+        <div style={{
+          height: '100%',
+          width: `${progress}%`,
+          background: 'linear-gradient(90deg, #9B72CB, #FF6B6B)',
+          borderRadius: 999,
+          transition: 'width 0.1s linear',
+        }} />
+      </div>
+    </div>
+  )
+}
 
 interface TagPickerProps {
   onDone: (result: ParsedPattern) => void
@@ -70,16 +127,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
 
   const canGenerate = moods.length > 0 && subject !== null && !rateLimited
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <Mascot mood="drawing" size={150} />
-        <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.5rem', color: '#9B72CB' }}>
-          {t.tagGenerating}
-        </p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-10 gap-8">
