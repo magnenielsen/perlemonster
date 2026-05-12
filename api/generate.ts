@@ -130,8 +130,10 @@ Generate the pattern.`
     if (!parsed.palette || !Array.isArray(parsed.palette)) throw new Error('bad palette')
     if (typeof parsed.grid !== 'string') throw new Error('bad grid')
     let rows = parsed.grid.split('\n').filter((r: string) => r.length > 0)
-    if (rows.length !== gridSize) throw new Error(`grid rows: ${rows.length}`)
-    // Pad or trim each row to exact size rather than failing
+    // Pad or trim row count to exact gridSize
+    while (rows.length < gridSize) rows.push('A'.repeat(gridSize))
+    rows = rows.slice(0, gridSize)
+    // Pad or trim each row to exact size
     rows = rows.map((r: string) => {
       if (r.length === gridSize) return r
       if (r.length > gridSize) return r.slice(0, gridSize)
