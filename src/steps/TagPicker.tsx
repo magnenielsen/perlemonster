@@ -71,6 +71,7 @@ const MAX_DAILY = 10
 export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [moods, setMoods] = useState<string[]>([])
   const [subject, setSubject] = useState<string | null>(null)
+  const [size, setSize] = useState<'small' | 'medium' | 'large'>('small')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rateLimited, setRateLimited] = useState(false)
@@ -99,7 +100,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
 
     const attempt = async (retry: boolean): Promise<ParsedPattern> => {
       try {
-        const result = await generatePattern({ mood: moods, subject, bust: isBust || retry })
+        const result = await generatePattern({ mood: moods, subject, size, bust: isBust || retry })
         return result
       } catch (e) {
         if (e instanceof RateLimitError) throw e
@@ -171,6 +172,25 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
           ))}
         </div>
         {!subject && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagSubjectRequired}</p>}
+      </div>
+
+      {/* Size */}
+      <div className="w-full max-w-xl">
+        <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
+          {t.tagSizeLabel}
+        </p>
+        <div className="flex gap-3">
+          {t.sizes.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSize(s.id as 'small' | 'medium' | 'large')}
+              className={`tag-btn flex-1 flex flex-col items-center gap-1 ${size === s.id ? 'selected' : ''}`}
+            >
+              <span>{s.label}</span>
+              <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{s.desc}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error */}

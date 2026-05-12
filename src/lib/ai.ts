@@ -4,6 +4,7 @@ import type { ParsedPattern } from './grid'
 export interface GenerateRequest {
   mood: string[]
   subject: string
+  size?: 'small' | 'medium' | 'large'
   bust?: boolean // true = skip cache (Gi meg en ny)
 }
 

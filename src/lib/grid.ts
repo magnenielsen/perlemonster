@@ -24,11 +24,10 @@ export function parseClaudeResponse(raw: string): ParsedPattern {
   }))
 
   const rows = json.grid.split('\n').filter(r => r.length > 0)
-  if (rows.length !== 29) throw new Error(`Expected 29 rows, got ${rows.length}`)
+  const size = rows.length
 
   const grid: Grid = rows.map(row => {
-    const chars = [...row].slice(0, 29)
-    if (chars.length !== 29) throw new Error(`Row length ${chars.length}, expected 29`)
+    const chars = [...row].slice(0, size)
     return chars.map(ch => {
       const idx = ch.charCodeAt(0) - 65 // A=0, B=1, ...
       if (idx < 0 || idx >= palette.length) throw new Error(`Bad index char '${ch}'`)

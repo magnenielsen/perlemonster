@@ -5,6 +5,7 @@ import { perlerColors } from './palette.js'
 // --- Closed vocabularies ---
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul', 'magisk', 'snill'])
 const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'romvesen', 'eventyr', 'kjøretøy', 'natur', 'robot'])
+const SIZE_MAP: Record<string, number> = { small: 11, medium: 19, large: 29 }
 
 // --- Simple in-memory rate limiter (resets on cold start; good enough for edge) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -26,24 +27,28 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 }
 
 
-const SYSTEM_PROMPT = `You are a pixel-art designer creating 29×29 bead patterns for a 7–10 year old child's Perler bead project.
+function buildSystemPrompt(n: number): string {
+  const total = n * n
+  const colors = n <= 11 ? '4-8' : n <= 19 ? '6-12' : '8-15'
+  return `You are a pixel-art designer creating ${n}×${n} bead patterns for a 7–10 year old child's Perler bead project.
 
 You must output ONLY valid JSON matching this exact schema:
 {
   "title": "<short Norwegian title, max 30 chars>",
   "palette": [{"idx": 0, "name": "<Perler name>", "code": "<Perler code>", "hex": "#RRGGBB"}, ...],
-  "grid": "<29 lines, 29 single-character palette indices per line, A-Z, separated by newlines>"
+  "grid": "<${n} lines, ${n} single-character palette indices per line, A-Z, separated by newlines>"
 }
 
 Rules:
-- The grid is 29 rows of 29 characters, total 841 cells
+- The grid is EXACTLY ${n} rows of EXACTLY ${n} characters each, total ${total} cells
 - Each character is a palette index, A through whatever (max 26 colours: A-Z)
-- Use 8-15 colours from the supplied Perler palette
+- Use ${colors} colours from the supplied Perler palette
 - Index A is the background colour (usually white or a sky tone)
 - Centre the subject; leave 1-2 cells of margin on all sides
 - Use bold, clear shapes with strong outlines; avoid single-pixel details
 - Child-friendly: cute, never gory or disturbing, even with "skummel" tags
 - Output JSON only, no commentary, no markdown fences`
+}
 
 function extractJson(text: string): string {
   const start = text.indexOf('{')
@@ -68,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // --- Input validation ---
-  const { mood, subject, bust } = req.body ?? {}
+  const { mood, subject, size = 'medium', bust } = req.body ?? {}
 
   if (!Array.isArray(mood) || mood.length === 0 || typeof subject !== 'string') {
     return res.status(400).json({ error: 'Invalid input' })
@@ -77,6 +82,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const invalidMood = mood.find((m: unknown) => typeof m !== 'string' || !VALID_MOODS.has(m))
   if (invalidMood !== undefined) return res.status(400).json({ error: 'Invalid mood tag' })
   if (!VALID_SUBJECTS.has(subject)) return res.status(400).json({ error: 'Invalid subject tag' })
+  if (typeof size !== 'string' || !SIZE_MAP[size]) return res.status(400).json({ error: 'Invalid size' })
+  const gridSize = SIZE_MAP[size]
 
   // --- Rate limit ---
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? '0.0.0.0'
@@ -93,6 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // --- Build prompt ---
+  const systemPrompt = buildSystemPrompt(gridSize)
   const userMessage = `Mood tags: ${(mood as string[]).join(', ')}
 Subject: ${subject}
 
@@ -108,11 +116,10 @@ Generate the pattern.`
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 3000,
-      system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
       // Enable prompt caching on system prompt (stable) unless bust=true
-      ...(bust ? {} : {
-        system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }] as Parameters<typeof client.messages.create>[0]['system'],
+      ...(bust ? { system: systemPrompt } : {
+        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }] as Parameters<typeof client.messages.create>[0]['system'],
       }),
     })
 
@@ -123,12 +130,12 @@ Generate the pattern.`
     if (!parsed.palette || !Array.isArray(parsed.palette)) throw new Error('bad palette')
     if (typeof parsed.grid !== 'string') throw new Error('bad grid')
     let rows = parsed.grid.split('\n').filter((r: string) => r.length > 0)
-    if (rows.length !== 29) throw new Error(`grid rows: ${rows.length}`)
-    // Pad or trim each row to exactly 29 chars rather than failing
+    if (rows.length !== gridSize) throw new Error(`grid rows: ${rows.length}`)
+    // Pad or trim each row to exact size rather than failing
     rows = rows.map((r: string) => {
-      if (r.length === 29) return r
-      if (r.length > 29) return r.slice(0, 29)
-      return r + 'A'.repeat(29 - r.length)
+      if (r.length === gridSize) return r
+      if (r.length > gridSize) return r.slice(0, gridSize)
+      return r + 'A'.repeat(gridSize - r.length)
     })
     parsed.grid = rows.join('\n')
 
