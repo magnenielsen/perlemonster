@@ -1,11 +1,11 @@
 export const t = {
   appName: 'Perlemonster',
-  tagline: 'Lag ditt eget perlemønster! 🎨',
+  tagline: 'Lag ditt eget perlemønster!',
 
   // Home
   pathATitle: 'Last opp bilde',
   pathADesc: 'Gjør et foto eller tegning om til et perlemønster',
-  pathBTitle: 'Få idéer ✨',
+  pathBTitle: 'Få idéer',
   pathBDesc: 'La Perlemonsteret tegne noe for deg',
   footer: 'Bildene dine forlater aldri datamaskinen din.',
 

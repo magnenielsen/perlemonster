@@ -1,5 +1,6 @@
 import { t } from '../i18n/no'
 import { Mascot } from '../components/Mascot'
+import { PixelIcon, PHOTO_PIXELS, BULB_PIXELS } from '../components/PixelIcon'
 
 interface HomeProps {
   onPathA: () => void
@@ -30,7 +31,7 @@ export function Home({ onPathA, onPathB }: HomeProps) {
           className="card flex-1 flex flex-col items-center gap-4 p-8 hover:scale-105 transition-transform cursor-pointer text-left border-2 border-transparent hover:border-coral"
           style={{ borderRadius: '1.5rem' }}
         >
-          <div className="text-5xl">📷</div>
+          <PixelIcon grid={PHOTO_PIXELS} cellSize={6} />
           <div>
             <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.5rem', color: '#2D3047', marginBottom: 4 }}>
               {t.pathATitle}
@@ -47,7 +48,7 @@ export function Home({ onPathA, onPathB }: HomeProps) {
           className="card flex-1 flex flex-col items-center gap-4 p-8 hover:scale-105 transition-transform cursor-pointer text-left border-2 border-transparent hover:border-lavender"
           style={{ borderRadius: '1.5rem' }}
         >
-          <div className="text-5xl">✨</div>
+          <PixelIcon grid={BULB_PIXELS} cellSize={6} />
           <div>
             <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.5rem', color: '#2D3047', marginBottom: 4 }}>
               {t.pathBTitle}
