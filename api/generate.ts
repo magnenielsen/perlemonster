@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createRequire } from 'module'
-const perlerColors = createRequire(import.meta.url)('./perler-colors.json')
+import { perlerColors } from './palette'
 
 // --- Closed vocabularies ---
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul', 'magisk', 'snill'])
