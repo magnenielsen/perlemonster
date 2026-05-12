@@ -45,6 +45,23 @@ Rules:
 - Child-friendly: cute, never gory or disturbing, even with "skummel" tags
 - Output JSON only, no commentary, no markdown fences`
 
+function extractJson(text: string): string {
+  const start = text.indexOf('{')
+  if (start === -1) throw new Error('no JSON in response')
+  let depth = 0, inString = false, escape = false
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]
+    if (escape) { escape = false; continue }
+    if (ch === '\\' && inString) { escape = true; continue }
+    if (ch === '"') { inString = !inString; continue }
+    if (!inString) {
+      if (ch === '{') depth++
+      else if (ch === '}' && --depth === 0) return text.slice(start, i + 1)
+    }
+  }
+  throw new Error('unbalanced JSON in response')
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -90,7 +107,7 @@ Generate the pattern.`
   const attempt = async (): Promise<object> => {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      max_tokens: 3000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
       // Enable prompt caching on system prompt (stable) unless bust=true
@@ -100,9 +117,7 @@ Generate the pattern.`
     })
 
     const raw = response.content.find(b => b.type === 'text')?.text ?? ''
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('no JSON in response')
-    const parsed = JSON.parse(jsonMatch[0])
+    const parsed = JSON.parse(extractJson(raw))
 
     // Validate structure
     if (!parsed.palette || !Array.isArray(parsed.palette)) throw new Error('bad palette')
@@ -117,10 +132,10 @@ Generate the pattern.`
     })
     parsed.grid = rows.join('\n')
 
-    // Estimate cost ($0.001/$0.005 per 1k tokens for Haiku 4.5)
+    // Estimate cost ($0.003/$0.015 per 1k tokens for Sonnet 4.6)
     const inputTokens = response.usage?.input_tokens ?? 3000
-    const outputTokens = response.usage?.output_tokens ?? 1200
-    todayCost += (inputTokens / 1000) * 0.001 + (outputTokens / 1000) * 0.005
+    const outputTokens = response.usage?.output_tokens ?? 1500
+    todayCost += (inputTokens / 1000) * 0.003 + (outputTokens / 1000) * 0.015
 
     return parsed
   }
