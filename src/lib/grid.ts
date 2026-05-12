@@ -28,10 +28,12 @@ export function parseClaudeResponse(raw: string): ParsedPattern {
 
   const grid: Grid = rows.map(row => {
     const chars = [...row].slice(0, size)
+    // Pad short rows with background (index 0)
+    while (chars.length < size) chars.push('A')
     return chars.map(ch => {
       const idx = ch.charCodeAt(0) - 65 // A=0, B=1, ...
-      if (idx < 0 || idx >= palette.length) throw new Error(`Bad index char '${ch}'`)
-      return idx
+      // Clamp out-of-range chars to background instead of throwing
+      return idx < 0 || idx >= palette.length ? 0 : idx
     })
   })
 
