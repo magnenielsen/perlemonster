@@ -8,7 +8,7 @@ const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'romvesen', 'eventyr', 
 
 // --- Simple in-memory rate limiter (resets on cold start; good enough for edge) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const MAX_PER_DAY = parseInt(process.env.RATE_LIMIT_PER_DAY ?? '20', 10)
+const MAX_PER_DAY = parseInt(process.env.RATE_LIMIT_PER_DAY ?? '10', 10)
 const DAILY_COST_CAP = parseFloat(process.env.DAILY_COST_CAP ?? '5')
 let todayCost = 0
 let costResetDate = new Date().toDateString()
@@ -89,7 +89,7 @@ Generate the pattern.`
   // Attempt with optional retry
   const attempt = async (): Promise<object> => {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1500,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
@@ -106,11 +106,15 @@ Generate the pattern.`
     // Validate structure
     if (!parsed.palette || !Array.isArray(parsed.palette)) throw new Error('bad palette')
     if (typeof parsed.grid !== 'string') throw new Error('bad grid')
-    const rows = parsed.grid.split('\n').filter((r: string) => r.length > 0)
+    let rows = parsed.grid.split('\n').filter((r: string) => r.length > 0)
     if (rows.length !== 29) throw new Error(`grid rows: ${rows.length}`)
-    for (const row of rows) {
-      if ([...row].length !== 29) throw new Error('grid col length')
-    }
+    // Pad or trim each row to exactly 29 chars rather than failing
+    rows = rows.map((r: string) => {
+      if (r.length === 29) return r
+      if (r.length > 29) return r.slice(0, 29)
+      return r + 'A'.repeat(29 - r.length)
+    })
+    parsed.grid = rows.join('\n')
 
     // Estimate cost ($0.001/$0.005 per 1k tokens for Haiku 4.5)
     const inputTokens = response.usage?.input_tokens ?? 3000

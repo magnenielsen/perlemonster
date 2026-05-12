@@ -66,7 +66,7 @@ interface TagPickerProps {
   onBack: () => void
 }
 
-const MAX_DAILY = 20
+const MAX_DAILY = 10
 
 export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [moods, setMoods] = useState<string[]>([])
