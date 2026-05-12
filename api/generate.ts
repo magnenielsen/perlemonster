@@ -100,8 +100,9 @@ Generate the pattern.`
     })
 
     const raw = response.content.find(b => b.type === 'text')?.text ?? ''
-    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
-    const parsed = JSON.parse(text)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('no JSON in response')
+    const parsed = JSON.parse(jsonMatch[0])
 
     // Validate structure
     if (!parsed.palette || !Array.isArray(parsed.palette)) throw new Error('bad palette')
