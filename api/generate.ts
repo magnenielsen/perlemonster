@@ -1,8 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — esbuild bundles JSON natively; no assertion needed
-import perlerColors from '../public/palette/perler-colors.json'
+import { createRequire } from 'module'
+const perlerColors = createRequire(import.meta.url)('../public/palette/perler-colors.json')
 
 // --- Closed vocabularies ---
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul', 'magisk', 'snill'])
