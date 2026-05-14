@@ -5,7 +5,7 @@ import type { Grid } from './quantize'
 export interface GenerateRequest {
   mood: string[]
   subject: string
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'portrait' | 'square' | 'large'
   bust?: boolean // true = skip cache (Gi meg en ny)
 }
 
