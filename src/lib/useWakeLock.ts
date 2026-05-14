@@ -5,13 +5,13 @@ export function useWakeLock() {
   const sentinelRef = useRef<WakeLockSentinel | null>(null)
   const wantActive = useRef(false)
 
-  const supported = typeof navigator !== 'undefined' && 'wakeLock' in navigator
+  const supported = 'wakeLock' in navigator
 
   const acquire = useCallback(async () => {
-    if (!supported) return
     try {
-      sentinelRef.current = await navigator.wakeLock.request('screen')
-      sentinelRef.current.addEventListener('release', () => {
+      const sentinel = await navigator.wakeLock.request('screen')
+      sentinelRef.current = sentinel
+      sentinel.addEventListener('release', () => {
         setActive(false)
         sentinelRef.current = null
       })
@@ -19,10 +19,10 @@ export function useWakeLock() {
     } catch {
       setActive(false)
     }
-  }, [supported])
+  }, [])
 
   const release = useCallback(() => {
-    sentinelRef.current?.release()
+    sentinelRef.current?.release().catch(() => undefined)
     sentinelRef.current = null
     setActive(false)
   }, [])
@@ -41,7 +41,7 @@ export function useWakeLock() {
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState === 'visible' && wantActive.current && !sentinelRef.current) {
-        acquire()
+        acquire().catch(() => undefined)
       }
     }
     document.addEventListener('visibilitychange', onVisibility)
@@ -49,7 +49,7 @@ export function useWakeLock() {
   }, [acquire])
 
   // Release on unmount
-  useEffect(() => () => { sentinelRef.current?.release() }, [])
+  useEffect(() => () => { sentinelRef.current?.release().catch(() => undefined) }, [])
 
   return { supported, active, toggle }
 }
