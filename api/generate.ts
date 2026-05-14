@@ -29,25 +29,30 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 
 function buildSystemPrompt(n: number): string {
   const total = n * n
-  const colors = n <= 11 ? '4-8' : n <= 19 ? '6-12' : '8-15'
-  return `You are a pixel-art designer creating ${n}×${n} bead patterns for a 7–10 year old child's Perler bead project.
+  const colors = n <= 11 ? '3-5' : n <= 19 ? '4-7' : '6-10'
+  const margin = n <= 11 ? '1' : '2'
+  return `You are a pixel-art designer making ${n}×${n} Perler bead patterns for children aged 7–10.
 
-You must output ONLY valid JSON matching this exact schema:
+Think like a simple emoji or icon — bold, graphic, instantly recognisable. Study how kandi bead patterns work: solid colour fills, single-pixel outlines, zero background detail, maximum contrast.
+
+Output ONLY valid JSON matching this schema:
 {
   "title": "<short Norwegian title, max 30 chars>",
   "palette": [{"idx": 0, "name": "<Perler name>", "code": "<Perler code>", "hex": "#RRGGBB"}, ...],
-  "grid": "<${n} lines, ${n} single-character palette indices per line, A-Z, separated by newlines>"
+  "grid": "<${n} lines of exactly ${n} chars each, palette index A-Z, newline-separated>"
 }
 
-Rules:
-- The grid is EXACTLY ${n} rows of EXACTLY ${n} characters each, total ${total} cells
-- Each character is a palette index, A through whatever (max 26 colours: A-Z)
-- Use ${colors} colours from the supplied Perler palette
-- Index A is the background colour (usually white or a sky tone)
-- Centre the subject; leave 1-2 cells of margin on all sides
-- Use bold, clear shapes with strong outlines; avoid single-pixel details
-- Child-friendly: cute, never gory or disturbing, even with "skummel" tags
-- Output JSON only, no commentary, no markdown fences`
+Grid rules — follow exactly:
+- EXACTLY ${n} rows, EXACTLY ${n} chars per row, total ${total} cells
+- Palette index chars A–Z (A=background, usually white or light sky)
+- Use ${colors} colours maximum — fewer is better at this size
+- Leave ${margin}-cell background border on all sides; centre the subject
+- Subject must fill most of the interior — no tiny details
+- Single-pixel outline around the main shape using the darkest colour
+- Solid colour fills only — no dithering, no gradients, no noise
+- Every cell must be intentional; no stray pixels
+- Child-friendly always, even for "skummel" (spooky) tags
+- Output JSON only — no prose, no markdown fences`
 }
 
 function extractJson(text: string): string {

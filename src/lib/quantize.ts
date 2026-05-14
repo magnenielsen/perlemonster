@@ -1,14 +1,12 @@
 import { rgbToLab, nearestPerlerIndex, PALETTE } from './palette'
 import type { PerlerColor } from './palette'
 
-export type Grid = number[][] // 29x29, each value is index into active palette
+export type Grid = number[][] // n×n, each value is index into active palette
 
 export interface QuantizeResult {
   grid: Grid
   palette: PerlerColor[] // subset of PALETTE actually used
 }
-
-const GRID_SIZE = 29
 
 function randomInt(n: number): number {
   return Math.floor(Math.random() * n)
@@ -67,7 +65,8 @@ function kmeans(pixels: [number, number, number][], k: number, iterations = 20):
 export function quantizeImageData(
   imageData: ImageData,
   colorCount: 8 | 15 | 30,
-  _style: 'glatt' | 'skarp' // dithering applied before calling this
+  _style: 'glatt' | 'skarp',
+  gridSize: number = 29
 ): QuantizeResult {
   const { data, width, height } = imageData
   const pixels: [number, number, number][] = []
@@ -81,11 +80,6 @@ export function quantizeImageData(
 
   const perlerIndices = kmeans(pixels, colorCount)
 
-  // Build grid (downsampled to GRID_SIZE x GRID_SIZE)
-  // imageData should already be 29x29, but handle generic size too
-  const sw = width / GRID_SIZE
-  const sh = height / GRID_SIZE
-
   const usedIndices = new Set<number>(perlerIndices)
   const globalToLocal = new Map<number, number>()
   const activePalette: PerlerColor[] = []
@@ -94,14 +88,29 @@ export function quantizeImageData(
     activePalette.push(PALETTE[gi])
   })
 
+  // Area averaging: each output cell takes the majority-vote Perler colour
+  // from the source pixels in its region — much more accurate than center-pixel sampling
   const grid: Grid = []
-  for (let row = 0; row < GRID_SIZE; row++) {
+  for (let row = 0; row < gridSize; row++) {
     const rowArr: number[] = []
-    for (let col = 0; col < GRID_SIZE; col++) {
-      const px = Math.min(Math.floor(col * sw + sw/2), width - 1)
-      const py = Math.min(Math.floor(row * sh + sh/2), height - 1)
-      const pixelIdx = py * width + px
-      rowArr.push(globalToLocal.get(perlerIndices[pixelIdx]) ?? 0)
+    for (let col = 0; col < gridSize; col++) {
+      const x0 = Math.floor(col * width / gridSize)
+      const x1 = Math.max(x0 + 1, Math.floor((col + 1) * width / gridSize))
+      const y0 = Math.floor(row * height / gridSize)
+      const y1 = Math.max(y0 + 1, Math.floor((row + 1) * height / gridSize))
+
+      const votes = new Map<number, number>()
+      for (let py = y0; py < y1; py++) {
+        for (let px = x0; px < x1; px++) {
+          const gi = perlerIndices[py * width + px]
+          votes.set(gi, (votes.get(gi) ?? 0) + 1)
+        }
+      }
+
+      let bestGi = perlerIndices[y0 * width + x0]
+      let bestVotes = 0
+      votes.forEach((count, gi) => { if (count > bestVotes) { bestVotes = count; bestGi = gi } })
+      rowArr.push(globalToLocal.get(bestGi) ?? 0)
     }
     grid.push(rowArr)
   }

@@ -133,9 +133,11 @@ export function Crop({ imageDataUrl, onCrop, onBack }: CropProps) {
     const scale = img.width / w
     const srcX = bx * scale, srcY = by * scale, srcSize = bs * scale
     const out = document.createElement('canvas')
-    out.width = 29; out.height = 29
+    out.width = 290; out.height = 290
     const ctx = out.getContext('2d')!
-    ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, 29, 29)
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, 290, 290)
     onCrop(out)
   }, [box, imgScale, onCrop])
 

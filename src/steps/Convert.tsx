@@ -12,13 +12,15 @@ interface ConvertProps {
 }
 
 export function Convert({ croppedCanvas, onDone, onBack }: ConvertProps) {
-  const [colorCount, setColorCount] = useState<8 | 15 | 30>(15)
-  const [style, setStyle] = useState<'glatt' | 'skarp'>('glatt')
+  const [colorCount, setColorCount] = useState<8 | 15 | 30>(8)
+  const [style, setStyle] = useState<'glatt' | 'skarp'>('skarp')
+  const [size, setSize] = useState<'small' | 'medium' | 'large'>('small')
   const [converting, setConverting] = useState(false)
+
+  const SIZE_MAP = { small: 11, medium: 19, large: 29 }
 
   const handleConvert = async () => {
     setConverting(true)
-    // Yield to React to paint the loading state
     await new Promise(r => setTimeout(r, 50))
 
     const ctx = croppedCanvas.getContext('2d')!
@@ -28,7 +30,7 @@ export function Convert({ croppedCanvas, onDone, onBack }: ConvertProps) {
       imageData = floydSteinberg(imageData)
     }
 
-    const result = quantizeImageData(imageData, colorCount, style)
+    const result = quantizeImageData(imageData, colorCount, style, SIZE_MAP[size])
     setConverting(false)
     onDone(result)
   }
@@ -49,6 +51,26 @@ export function Convert({ croppedCanvas, onDone, onBack }: ConvertProps) {
           </h1>
 
           <div className="card flex flex-col gap-6" style={{ width: '100%', maxWidth: 440 }}>
+            {/* Size */}
+            <div>
+              <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.1rem', color: '#2D3047', marginBottom: 10 }}>
+                {t.tagSizeLabel}
+              </p>
+              <div className="flex gap-3">
+                {t.sizes.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSize(s.id as 'small' | 'medium' | 'large')}
+                    className="tag-btn flex-1 flex flex-col items-center gap-1"
+                    style={size === s.id ? { borderColor: '#FF6B6B', background: '#FFF0F0', color: '#FF6B6B' } : {}}
+                  >
+                    <span>{s.label}</span>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.7, fontWeight: 400 }}>{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Color count */}
             <div>
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.1rem', color: '#2D3047', marginBottom: 10 }}>
