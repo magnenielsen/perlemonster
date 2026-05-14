@@ -1,8 +1,32 @@
 import { useState, useEffect } from 'react'
 import { t } from '../i18n/no'
 import { generatePattern, RateLimitError } from '../lib/ai'
+import { quantizeImageData } from '../lib/quantize'
 import type { ParsedPattern } from '../lib/grid'
 import { Mascot } from '../components/Mascot'
+
+const SIZE_MAP = {
+  small:    { rows: 11, cols: 11 },
+  portrait: { rows: 21, cols: 13 },
+  square:   { rows: 19, cols: 19 },
+  large:    { rows: 29, cols: 29 },
+}
+
+async function imageBase64ToGrid(imageBase64: string, rows: number, cols: number): Promise<{ grid: ParsedPattern['grid']; palette: ParsedPattern['palette'] }> {
+  const img = new Image()
+  img.src = imageBase64
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = () => reject(new Error('image load failed'))
+  })
+  const canvas = document.createElement('canvas')
+  canvas.width = img.width
+  canvas.height = img.height
+  canvas.getContext('2d')!.drawImage(img, 0, 0)
+  const imageData = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height)
+  const result = quantizeImageData(imageData, 15, 'skarp', rows, cols)
+  return { grid: result.grid, palette: result.palette }
+}
 
 const POP_POSITIONS = [
   { left: '12%' }, { left: '30%' }, { left: '52%' }, { left: '68%' }, { left: '82%' },
@@ -32,7 +56,6 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center gap-10"
       style={{ background: '#FFF8F0' }}>
-      {/* Popping mascot */}
       <div style={{
         position: 'fixed',
         bottom: 0,
@@ -43,8 +66,6 @@ function LoadingScreen() {
       }}>
         <Mascot mood="drawing" size={130} />
       </div>
-
-      {/* Text + progress */}
       <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.8rem', color: '#9B72CB', zIndex: 1 }}>
         {t.tagGenerating}
       </p>
@@ -82,7 +103,6 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
     if (date !== new Date().toDateString()) return 0
     return count
   })
-  const [, setBust] = useState(false) // bust cache on "Gi meg en ny"
 
   const saveUsage = (n: number) => {
     localStorage.setItem('pm_daily', JSON.stringify({ date: new Date().toDateString(), count: n }))
@@ -100,8 +120,9 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
 
     const attempt = async (retry: boolean): Promise<ParsedPattern> => {
       try {
-        const result = await generatePattern({ mood: moods, subject, size, bust: isBust || retry })
-        return result
+        const { imageBase64 } = await generatePattern({ mood: moods, subject, size, bust: isBust || retry })
+        const { rows, cols } = SIZE_MAP[size]
+        return await imageBase64ToGrid(imageBase64, rows, cols)
       } catch (e) {
         if (e instanceof RateLimitError) throw e
         if (!retry) return attempt(true)
@@ -111,8 +132,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
 
     try {
       const result = await attempt(false)
-      const newCount = dailyUsed + 1
-      saveUsage(newCount)
+      saveUsage(dailyUsed + 1)
       setLoading(false)
       onDone(result)
     } catch (e) {
@@ -200,40 +220,18 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
         </div>
       )}
 
-      {/* Daily counter */}
       <p style={{ color: '#aaa', fontSize: '0.85rem' }}>{t.tagCounter(dailyUsed, MAX_DAILY)}</p>
 
-      {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <button className="btn-secondary" onClick={onBack}>{t.tagBack}</button>
         <button
           className="btn-primary"
           disabled={!canGenerate}
-          onClick={() => { setBust(false); generate(false) }}
+          onClick={() => generate(false)}
         >
           {t.tagGenerate}
         </button>
       </div>
     </div>
-  )
-}
-
-// "Gi meg en ny" variant — shown in Edit step via a callback
-export function NewIdeaButton({ moods, subject, onDone }: { moods: string[]; subject: string; onDone: (p: ParsedPattern) => void }) {
-  const [loading, setLoading] = useState(false)
-
-  const handleNew = async () => {
-    setLoading(true)
-    try {
-      const result = await generatePattern({ mood: moods, subject, bust: true })
-      onDone(result)
-    } catch {}
-    setLoading(false)
-  }
-
-  return (
-    <button className="btn-sunshine" onClick={handleNew} disabled={loading}>
-      {loading ? '⏳' : t.tagNew}
-    </button>
   )
 }

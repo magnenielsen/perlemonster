@@ -1,15 +1,11 @@
-import type { ParsedPattern } from './grid'
-import type { PerlerColor } from './palette'
-import type { Grid } from './quantize'
-
 export interface GenerateRequest {
   mood: string[]
   subject: string
   size?: 'small' | 'portrait' | 'square' | 'large'
-  bust?: boolean // true = skip cache (Gi meg en ny)
+  bust?: boolean
 }
 
-export async function generatePattern(req: GenerateRequest): Promise<ParsedPattern> {
+export async function generatePattern(req: GenerateRequest): Promise<{ imageBase64: string }> {
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -21,28 +17,11 @@ export async function generatePattern(req: GenerateRequest): Promise<ParsedPatte
     throw new RateLimitError(data.remaining ?? 0)
   }
 
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`)
-  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
   const data = await res.json()
-
-  const palette: PerlerColor[] = (data.palette as Array<{ code: string; name: string; hex: string }>).map(p => ({
-    code: p.code,
-    name: p.name,
-    hex: p.hex,
-  }))
-  const rowStrings = (data.grid as string).split('\n').filter((r: string) => r.length > 0)
-  const numCols = rowStrings[0]?.length ?? rowStrings.length
-  const grid: Grid = rowStrings.map(row => {
-    const chars = [...row].slice(0, numCols)
-    while (chars.length < numCols) chars.push('A')
-    return chars.map(ch => {
-      const idx = ch.charCodeAt(0) - 65
-      return Math.max(0, Math.min(idx, palette.length - 1))
-    })
-  })
-  return { grid, palette, title: data.title as string | undefined }
+  if (!data.imageBase64) throw new Error('no image in response')
+  return { imageBase64: data.imageBase64 as string }
 }
 
 export class RateLimitError extends Error {
