@@ -80,7 +80,8 @@ export const t = {
   editUndo: '↩ Angre',
   editRedo: '↪ Gjenta',
   editReset: '🔄 Start på nytt',
-  editColorPicker: 'Velg farge:',
+  editColorPicker: 'Mønsterfarger:',
+  editAllColors: 'Alle perlefarger:',
   editNext: 'Ferdig! →',
   editBack: '← Tilbake',
 
