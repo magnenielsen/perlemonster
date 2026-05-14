@@ -152,7 +152,7 @@ const MAX_DAILY = 10
 export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [moods, setMoods] = useState<string[]>([])
   const [subject, setSubject] = useState<string | null>(null)
-  const [size, setSize] = useState<'portrait' | 'square' | 'large'>('portrait')
+  const [size, setSize] = useState<'portrait' | 'square' | 'large'>('square')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rateLimited, setRateLimited] = useState(false)

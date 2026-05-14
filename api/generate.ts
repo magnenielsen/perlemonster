@@ -63,7 +63,7 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { mood, subject, size = 'portrait' } = req.body ?? {}
+  const { mood, subject, size = 'square' } = req.body ?? {}
 
   if (!Array.isArray(mood) || mood.length === 0 || typeof subject !== 'string') {
     return res.status(400).json({ error: 'Invalid input' })
