@@ -157,11 +157,13 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [error, setError] = useState<string | null>(null)
   const [rateLimited, setRateLimited] = useState(false)
   const [dailyUsed, setDailyUsed] = useState<number>(() => {
-    const stored = localStorage.getItem('pm_daily')
-    if (!stored) return 0
-    const { date, count } = JSON.parse(stored)
-    if (date !== new Date().toDateString()) return 0
-    return count
+    try {
+      const stored = localStorage.getItem('pm_daily')
+      if (!stored) return 0
+      const { date, count } = JSON.parse(stored)
+      if (date !== new Date().toDateString()) return 0
+      return count
+    } catch { return 0 }
   })
 
   const saveUsage = (n: number) => {

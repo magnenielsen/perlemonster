@@ -60,14 +60,26 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
   return { allowed: true, remaining: MAX_PER_DAY - entry.count }
 }
 
+function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return true // non-browser clients (curl etc.) — acceptable
+  const allowed = process.env.ALLOWED_ORIGIN
+  if (!allowed) return true // no restriction configured — allow all
+  return origin === allowed || /^https?:\/\/localhost(:\d+)?$/.test(origin)
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // CORS origin check — blocks other websites from draining your Replicate quota
+  const origin = req.headers['origin'] as string | undefined
+  if (!isOriginAllowed(origin)) return res.status(403).json({ error: 'Forbidden' })
 
   const { mood, subject, size = 'square' } = req.body ?? {}
 
   if (!Array.isArray(mood) || mood.length === 0 || typeof subject !== 'string') {
     return res.status(400).json({ error: 'Invalid input' })
   }
+  if (mood.length > 4) return res.status(400).json({ error: 'Too many moods' })
   const invalidMood = mood.find((m: unknown) => typeof m !== 'string' || !VALID_MOODS.has(m))
   if (invalidMood !== undefined) return res.status(400).json({ error: 'Invalid mood' })
   if (!VALID_SUBJECTS.has(subject)) return res.status(400).json({ error: 'Invalid subject' })
@@ -109,7 +121,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error(`Replicate status: ${prediction.status}`)
     }
 
-    const imgRes = await fetch(prediction.output[0])
+    const imageUrl = prediction.output[0]
+    if (!imageUrl.startsWith('https://')) throw new Error('Unexpected image URL')
+    const imgRes = await fetch(imageUrl)
+    if (!imgRes.ok) throw new Error(`Image fetch failed: ${imgRes.status}`)
+    const contentType = imgRes.headers.get('content-type') ?? ''
+    if (!contentType.startsWith('image/')) throw new Error(`Unexpected content-type: ${contentType}`)
     const imgBuffer = await imgRes.arrayBuffer()
     const base64 = Buffer.from(imgBuffer).toString('base64')
 
