@@ -4,7 +4,6 @@ const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul'])
 const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'natur', 'robot'])
 
 const SIZE_MAP: Record<string, { rows: number; cols: number; aspect: string }> = {
-  small:    { rows: 11, cols: 11, aspect: '1:1' },
   portrait: { rows: 21, cols: 13, aspect: '2:3' },
   square:   { rows: 19, cols: 19, aspect: '1:1' },
   large:    { rows: 29, cols: 29, aspect: '1:1' },
@@ -26,7 +25,6 @@ const MOOD_PROMPTS: Record<string, string> = {
 }
 
 const COMPLEXITY_BY_SIZE: Record<string, string> = {
-  small:    'Extremely simple — only 2 or 3 large flat color blobs, absolutely no fine details, think a basic emoji icon.',
   portrait: 'Simple character shape, 3 or 4 flat color regions, bold chunky body proportions.',
   square:   'Simple sprite, 4 or 5 flat color regions, chunky bold shapes.',
   large:    'Clear detailed sprite, 5 or 6 flat color regions, instantly recognizable silhouette.',
@@ -65,7 +63,7 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { mood, subject, size = 'small' } = req.body ?? {}
+  const { mood, subject, size = 'portrait' } = req.body ?? {}
 
   if (!Array.isArray(mood) || mood.length === 0 || typeof subject !== 'string') {
     return res.status(400).json({ error: 'Invalid input' })

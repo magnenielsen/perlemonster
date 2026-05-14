@@ -6,14 +6,13 @@ import type { ParsedPattern } from '../lib/grid'
 import { Mascot } from '../components/Mascot'
 
 const SIZE_MAP = {
-  small:    { rows: 11, cols: 11 },
   portrait: { rows: 21, cols: 13 },
   square:   { rows: 19, cols: 19 },
   large:    { rows: 29, cols: 29 },
 }
 
-const COLOR_COUNT: Record<'small' | 'portrait' | 'square' | 'large', 8 | 15 | 30> = {
-  small: 8, portrait: 8, square: 8, large: 15,
+const COLOR_COUNT: Record<'portrait' | 'square' | 'large', 8 | 15 | 30> = {
+  portrait: 8, square: 8, large: 15,
 }
 
 async function imageBase64ToGrid(
@@ -153,7 +152,7 @@ const MAX_DAILY = 10
 export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [moods, setMoods] = useState<string[]>([])
   const [subject, setSubject] = useState<string | null>(null)
-  const [size, setSize] = useState<'small' | 'portrait' | 'square' | 'large'>('small')
+  const [size, setSize] = useState<'portrait' | 'square' | 'large'>('portrait')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rateLimited, setRateLimited] = useState(false)
@@ -268,7 +267,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
           {t.sizes.map(s => (
             <button
               key={s.id}
-              onClick={() => setSize(s.id as 'small' | 'portrait' | 'square' | 'large')}
+              onClick={() => setSize(s.id as 'portrait' | 'square' | 'large')}
               className={`tag-btn flex-1 flex flex-col items-center gap-1 ${size === s.id ? 'selected' : ''}`}
             >
               <span>{s.label}</span>
