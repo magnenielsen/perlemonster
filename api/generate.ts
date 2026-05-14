@@ -29,10 +29,11 @@ function buildFluxPrompt(moods: string[], subject: string): string {
   const moodDesc = moods.map(m => MOOD_PROMPTS[m] ?? m).join(', ')
   const subjectDesc = SUBJECT_PROMPTS[subject] ?? subject
   return (
-    `Simple pixel art of a ${moodDesc} ${subjectDesc}. ` +
-    `Pure white background. Bold dark outline. Flat solid colors only. ` +
-    `No shading, no gradients, no texture, no background details. ` +
-    `Centered, front-facing. Classic 8-bit video game sprite style.`
+    `${moodDesc} ${subjectDesc}, pixel art icon. ` +
+    `Subject fills the entire image edge to edge, zoomed in very close, no empty space, no margins. ` +
+    `Pure white background. Only 2-3 flat solid colors. Very bold dark outline. ` +
+    `No shading, no gradients, no anti-aliasing, no fine details, no thin lines. ` +
+    `Simple chunky shapes. Classic 8-bit NES game sprite style.`
   )
 }
 
