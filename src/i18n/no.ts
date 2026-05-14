@@ -60,8 +60,6 @@ export const t = {
     { id: 'morsom',  label: 'Morsom 😄' },
     { id: 'skummel', label: 'Skummel 👻' },
     { id: 'kul',     label: 'Kul 😎' },
-    { id: 'magisk',  label: 'Magisk 🪄' },
-    { id: 'snill',   label: 'Snill 💚' },
   ],
 
   subjects: [

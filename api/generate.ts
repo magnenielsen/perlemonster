@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { perlerColors } from './palette.js'
 
 // --- Closed vocabularies ---
-const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul', 'magisk', 'snill'])
+const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul'])
 const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'natur', 'robot'])
 const SIZE_MAP: Record<string, { rows: number; cols: number }> = {
   small:    { rows: 11, cols: 11 },
