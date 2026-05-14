@@ -20,6 +20,7 @@ interface AppState {
   grid: Grid | null
   palette: PerlerColor[]
   patternTitle: string
+  patternSourceImage: string | null
   // AI path metadata for "Gi meg en ny"
   aiMoods: string[]
   aiSubject: string | null
@@ -32,6 +33,7 @@ const INITIAL: AppState = {
   grid: null,
   palette: [],
   patternTitle: '',
+  patternSourceImage: null,
   aiMoods: [],
   aiSubject: null,
 }
@@ -99,8 +101,7 @@ export default function App() {
               grid: pattern.grid,
               palette: pattern.palette,
               patternTitle: pattern.title ?? '',
-              // We'd need to pass moods/subject back — TagPicker handles this internally,
-              // but for "Gi meg en ny" we store the tags in state via the callback below
+              patternSourceImage: pattern.sourceImage ?? null,
             })
           }
           onBack={() => go({ step: 'home' })}
@@ -111,6 +112,7 @@ export default function App() {
         <Edit
           grid={state.grid}
           palette={state.palette}
+          sourceImage={state.patternSourceImage || undefined}
           onDone={(grid, palette) => go({ step: 'export', grid, palette })}
           onBack={() => go({ step: state.croppedCanvas ? 'convert' : 'tagpicker' })}
           onNewIdea={state.aiSubject ? () => go({ step: 'tagpicker' }) : undefined}

@@ -25,15 +25,24 @@ const MOOD_PROMPTS: Record<string, string> = {
   kul:     'cool',
 }
 
-function buildFluxPrompt(moods: string[], subject: string): string {
+const COMPLEXITY_BY_SIZE: Record<string, string> = {
+  small:    'Extremely simple — only 2 or 3 large flat color blobs, absolutely no fine details, think a basic emoji icon.',
+  portrait: 'Simple character shape, 3 or 4 flat color regions, bold chunky body proportions.',
+  square:   'Simple sprite, 4 or 5 flat color regions, chunky bold shapes.',
+  large:    'Clear detailed sprite, 5 or 6 flat color regions, instantly recognizable silhouette.',
+}
+
+function buildFluxPrompt(moods: string[], subject: string, size: string): string {
   const moodDesc = moods.map(m => MOOD_PROMPTS[m] ?? m).join(', ')
   const subjectDesc = SUBJECT_PROMPTS[subject] ?? subject
+  const complexity = COMPLEXITY_BY_SIZE[size] ?? COMPLEXITY_BY_SIZE.small
   return (
-    `${moodDesc} ${subjectDesc}, pixel art icon. ` +
-    `Subject fills the entire image edge to edge, zoomed in very close, no empty space, no margins. ` +
-    `Pure white background. Only 2-3 flat solid colors. Very bold dark outline. ` +
-    `No shading, no gradients, no anti-aliasing, no fine details, no thin lines. ` +
-    `Simple chunky shapes. Classic 8-bit NES game sprite style.`
+    `${moodDesc} ${subjectDesc}, pixel art bead pattern sprite. ` +
+    `Solid medium gray background fills the entire image. Subject centered with a small gray border. ` +
+    `${complexity} ` +
+    `Bold black outline around subject. Flat solid colors only. ` +
+    `No shading, no gradients, no anti-aliasing, no thin lines, no textures. ` +
+    `Classic 8-bit NES game sprite style.`
   )
 }
 
@@ -71,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!allowed) return res.status(429).json({ error: 'rate_limit', remaining: 0 })
 
   const { aspect } = SIZE_MAP[size]
-  const prompt = buildFluxPrompt(mood as string[], subject)
+  const prompt = buildFluxPrompt(mood as string[], subject, size)
 
   try {
     const replicateRes = await fetch(

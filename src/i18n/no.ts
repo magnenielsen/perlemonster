@@ -72,6 +72,7 @@ export const t = {
 
   // Edit
   editTitle: 'Rediger mønster',
+  editReferenceImage: 'Referansebilde fra AI',
   editUndo: '↩ Angre',
   editRedo: '↪ Gjenta',
   editReset: '🔄 Start på nytt',

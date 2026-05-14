@@ -12,7 +12,16 @@ const SIZE_MAP = {
   large:    { rows: 29, cols: 29 },
 }
 
-async function imageBase64ToGrid(imageBase64: string, rows: number, cols: number): Promise<{ grid: ParsedPattern['grid']; palette: ParsedPattern['palette'] }> {
+const COLOR_COUNT: Record<'small' | 'portrait' | 'square' | 'large', number> = {
+  small: 5, portrait: 7, square: 7, large: 9,
+}
+
+async function imageBase64ToGrid(
+  imageBase64: string,
+  rows: number,
+  cols: number,
+  colorCount: number,
+): Promise<{ grid: ParsedPattern['grid']; palette: ParsedPattern['palette'] }> {
   const img = new Image()
   img.src = imageBase64
   await new Promise<void>((resolve, reject) => {
@@ -20,48 +29,16 @@ async function imageBase64ToGrid(imageBase64: string, rows: number, cols: number
     img.onerror = () => reject(new Error('image load failed'))
   })
 
-  // Draw full image so we can inspect pixels
-  const full = document.createElement('canvas')
-  full.width = img.width
-  full.height = img.height
-  const fullCtx = full.getContext('2d')!
-  fullCtx.drawImage(img, 0, 0)
-  const { data, width, height } = fullCtx.getImageData(0, 0, img.width, img.height)
-
-  // Find bounding box of non-white pixels (white = all channels > 240)
-  let minX = width, maxX = 0, minY = height, maxY = 0
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4
-      if (!(data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240)) {
-        if (x < minX) minX = x
-        if (x > maxX) maxX = x
-        if (y < minY) minY = y
-        if (y > maxY) maxY = y
-      }
-    }
-  }
-
-  // Fall back to full image if nothing found
-  if (minX >= maxX || minY >= maxY) { minX = 0; maxX = width - 1; minY = 0; maxY = height - 1 }
-
-  // Add a small padding around the subject
-  const pad = Math.floor(Math.min(width, height) * 0.04)
-  minX = Math.max(0, minX - pad); maxX = Math.min(width - 1, maxX + pad)
-  minY = Math.max(0, minY - pad); maxY = Math.min(height - 1, maxY + pad)
-
-  // Draw cropped subject scaled to fill a working canvas
+  // Scale full image to working canvas — background color is part of the design
   const out = document.createElement('canvas')
   out.width = 512; out.height = 512
   const outCtx = out.getContext('2d')!
-  outCtx.fillStyle = 'white'
-  outCtx.fillRect(0, 0, 512, 512)
   outCtx.imageSmoothingEnabled = true
   outCtx.imageSmoothingQuality = 'high'
-  outCtx.drawImage(full, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, 512, 512)
+  outCtx.drawImage(img, 0, 0, 512, 512)
 
   const imageData = outCtx.getImageData(0, 0, 512, 512)
-  const result = quantizeImageData(imageData, 8, 'skarp', rows, cols)
+  const result = quantizeImageData(imageData, colorCount, 'skarp', rows, cols)
   return { grid: result.grid, palette: result.palette }
 }
 
@@ -159,7 +136,9 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
       try {
         const { imageBase64 } = await generatePattern({ mood: moods, subject, size, bust: isBust || retry })
         const { rows, cols } = SIZE_MAP[size]
-        return await imageBase64ToGrid(imageBase64, rows, cols)
+        const colorCount = COLOR_COUNT[size]
+        const { grid, palette } = await imageBase64ToGrid(imageBase64, rows, cols, colorCount)
+        return { grid, palette, sourceImage: imageBase64 }
       } catch (e) {
         if (e instanceof RateLimitError) throw e
         if (!retry) return attempt(true)
@@ -171,7 +150,9 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
       const result = await attempt(false)
       saveUsage(dailyUsed + 1)
       setLoading(false)
-      onDone(result)
+      const moodLabels = moods.map(id => t.moods.find(m => m.id === id)?.label ?? id).join(', ')
+      const subjectLabel = t.subjects.find(s => s.id === subject)?.label ?? subject
+      onDone({ ...result, title: `${moodLabels} · ${subjectLabel}` })
     } catch (e) {
       setLoading(false)
       if (e instanceof RateLimitError) {

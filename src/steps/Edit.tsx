@@ -8,13 +8,14 @@ import type { Grid } from '../lib/quantize'
 interface EditProps {
   grid: Grid
   palette: PerlerColor[]
+  sourceImage?: string
   onDone: (grid: Grid, palette: PerlerColor[]) => void
   onBack: () => void
   /** If set, show "Gi meg en ny" button for AI path */
   onNewIdea?: () => void
 }
 
-export function Edit({ grid: initialGrid, palette: initialPalette, onDone, onBack, onNewIdea }: EditProps) {
+export function Edit({ grid: initialGrid, palette: initialPalette, sourceImage, onDone, onBack, onNewIdea }: EditProps) {
   const [history, setHistory] = useState<Grid[]>([initialGrid])
   const [future, setFuture] = useState<Grid[]>([])
   const [palette, setPalette] = useState<PerlerColor[]>(initialPalette)
@@ -73,9 +74,30 @@ export function Edit({ grid: initialGrid, palette: initialPalette, onDone, onBac
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-8 gap-6">
-      <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.8rem', color: '#2D3047' }}>
-        {t.editTitle}
-      </h1>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.8rem', color: '#2D3047' }}>
+          {t.editTitle}
+        </h1>
+        {sourceImage && (
+          <div style={{ marginTop: 10, display: 'inline-block' }}>
+            <img
+              src={sourceImage}
+              alt="AI-generert referanse"
+              style={{
+                width: 96,
+                height: 96,
+                objectFit: 'contain',
+                borderRadius: 14,
+                border: '2px solid #E8D5FF',
+                background: '#F5EEFF',
+              }}
+            />
+            <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: '0.75rem', color: '#aaa', marginTop: 4 }}>
+              {t.editReferenceImage}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Grid */}
       <div style={{ maxWidth: '100%', overflowX: 'auto' }}>

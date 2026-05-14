@@ -5,6 +5,7 @@ export interface ParsedPattern {
   grid: Grid
   palette: PerlerColor[]
   title?: string
+  sourceImage?: string
 }
 
 // Parse Claude's compact grid response:
