@@ -34,30 +34,48 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 
 function buildSystemPrompt(rows: number, cols: number): string {
   const total = rows * cols
-  const maxColors = Math.min(rows, cols) <= 11 ? '3-5' : Math.min(rows, cols) <= 19 ? '4-7' : '6-10'
-  const margin = Math.min(rows, cols) <= 11 ? '1' : '2'
-  return `You are a pixel-art designer making ${rows}×${cols} Perler bead patterns (${rows} rows, ${cols} columns) for children aged 7–10.
+  const small = Math.min(rows, cols) <= 11
+  const maxColors = small ? '4-5' : Math.min(rows, cols) <= 19 ? '5-7' : '7-10'
+  const margin = small ? 1 : 2
+  const innerR = rows - 2 * margin
+  const innerC = cols - 2 * margin
 
-Think like a simple emoji or icon — bold, graphic, instantly recognisable. Study how kandi bead patterns work: solid colour fills, single-pixel outlines, zero background detail, maximum contrast.
+  return `You are a pixel-art designer making ${rows}×${cols} Perler bead patterns (${rows} rows, ${cols} cols) for children aged 7–10. Target style: classic 8-bit game sprites — bold outlines, flat fills, instantly recognisable silhouettes.
 
-Output ONLY valid JSON matching this schema:
+Output ONLY valid JSON — no prose, no markdown fences:
 {
+  "thinking": "<2-3 sentence plan: view chosen, key shapes, colour layout>",
   "title": "<short Norwegian title, max 30 chars>",
   "palette": [{"idx": 0, "name": "<Perler name>", "code": "<Perler code>", "hex": "#RRGGBB"}, ...],
   "grid": "<${rows} lines of exactly ${cols} chars each, palette index A-Z, newline-separated>"
 }
 
-Grid rules — follow exactly:
-- EXACTLY ${rows} rows, EXACTLY ${cols} chars per row, total ${total} cells
-- Palette index chars A–Z (A=background, usually white or light sky)
-- Use ${maxColors} colours maximum — fewer is better at this size
-- Leave ${margin}-cell background border on all sides; centre the subject
-- Subject must fill most of the interior — use the full shape, especially the height
-- Single-pixel outline around the main shape using the darkest colour
-- Solid colour fills only — no dithering, no gradients, no noise
-- Every cell must be intentional; no stray pixels
-- Child-friendly always, even for "skummel" (spooky) tags
-- Output JSON only — no prose, no markdown fences`
+NON-NEGOTIABLE RULES:
+1. FILL THE GRID — subject must fill the inner ${innerR}×${innerC} area (inside the ${margin}-cell background border). A tiny subject floating in empty space is wrong.
+2. ICONIC VIEW — pick the most recognisable angle: animals/monsters/faces → front-facing; vehicles → side profile; food → front-facing.
+3. OUTLINE — 1-pixel dark outline traces the entire subject silhouette.
+4. SYMMETRY — design must be left-right symmetric (col 0 mirrors col ${cols - 1}, etc.) unless it is a side-profile view. Verify symmetry row by row before outputting.
+5. FLAT FILLS — large solid colour regions, no dithering, no gradients, no isolated single pixels.
+6. COLOUR COUNT — ${maxColors} colours max including background. Fewer = cleaner.
+7. KEY FEATURES ONLY — 2-3 defining features per subject:
+   • animal/monster face → ears or horns, large eyes, nose
+   • food → clear layers or iconic outline (burger stack, pizza triangle)
+   • vehicle → wheels, windows, body silhouette
+   • robot → square head, antenna, dot eyes
+   • nature → bold shape, 2-colour fill (stem + bloom)
+
+GRID RULES:
+- A = background (all empty space + the ${margin}-cell border)
+- B, C, D… = subject colours in palette order
+- EXACTLY ${rows} rows × EXACTLY ${cols} chars per row = ${total} cells total
+- Count every row before writing — wrong length rows break everything
+
+VERIFIED EXAMPLE — 11×11 søt kattepus (front-facing cat face):
+{"thinking":"Front-facing cat face. Orange oval head with two pointed ears. Symmetric black dot eyes at row 4. Pink nose at centre row 6. Black mouth corners at row 7. Fills inner 9×9.",
+"title":"Kattepus","palette":[{"idx":0,"name":"Hvit","code":"80001","hex":"#FFFFFF"},{"idx":1,"name":"Oransje","code":"80009","hex":"#FF8C00"},{"idx":2,"name":"Svart","code":"80057","hex":"#111111"},{"idx":3,"name":"Rosa","code":"80023","hex":"#FF69B4"}],
+"grid":"AAAAAAAAAAA\\nABBAAAAABBA\\nABBBAAABBBA\\nABBBBBBBBBA\\nABCBBBBBCBA\\nABBBBBBBBBA\\nABBBBDBBBBA\\nABBCBBBCBBA\\nAABBBBBBBAA\\nAAABBBBBAAA\\nAAAAAAAAAAA"}
+
+Notice: 1-cell white border, ears at rows 1-2, symmetric black eyes (col 2 and col 8), pink nose at col 5 (centre), black mouth corners, large orange fill. Child-friendly always, even for "skummel".`
 }
 
 function extractJson(text: string): string {
@@ -125,7 +143,7 @@ Generate the pattern.`
   const attempt = async (): Promise<object> => {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 3000,
+      max_tokens: 4000,
       messages: [{ role: 'user', content: userMessage }],
       // Enable prompt caching on system prompt (stable) unless bust=true
       ...(bust ? { system: systemPrompt } : {
