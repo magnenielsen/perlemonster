@@ -3,6 +3,7 @@ import { t } from '../i18n/no'
 import { BeadGrid } from '../components/BeadGrid'
 import { generatePDF } from '../lib/pdf'
 import { buildShareUrl } from '../lib/share'
+import { useWakeLock } from '../lib/useWakeLock'
 import type { PerlerColor } from '../lib/palette'
 import type { Grid } from '../lib/quantize'
 
@@ -17,6 +18,7 @@ interface ExportProps {
 export function Export({ grid, palette, onBack, onNew, initialTitle = '' }: ExportProps) {
   const [title, setTitle] = useState(initialTitle)
   const [copied, setCopied] = useState(false)
+  const { supported: wakeLockSupported, active: wakeLockActive, toggle: toggleWakeLock } = useWakeLock()
 
   const handlePDF = () => {
     generatePDF(grid, palette, title || 'Perlemonster')
@@ -114,6 +116,24 @@ export function Export({ grid, palette, onBack, onNew, initialTitle = '' }: Expo
         <button className="btn-sky" onClick={handleShare}>
           {copied ? t.exportShareDone : t.exportShare}
         </button>
+        {wakeLockSupported && (
+          <button
+            onClick={toggleWakeLock}
+            style={{
+              padding: '0.6rem 1.2rem',
+              borderRadius: '0.75rem',
+              border: wakeLockActive ? '2px solid #F59E0B' : '2px solid #e5e7eb',
+              background: wakeLockActive ? '#FEF3C7' : '#fff',
+              color: wakeLockActive ? '#92400E' : '#888',
+              fontFamily: "'Fredoka', sans-serif",
+              fontSize: '1rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            {wakeLockActive ? t.exportWakeActive : t.exportWake}
+          </button>
+        )}
       </div>
 
       <div className="flex gap-4">

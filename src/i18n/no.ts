@@ -94,4 +94,6 @@ export const t = {
   exportShareDone: '✅ Lenke kopiert!',
   exportNew: '🏠 Lag et nytt',
   exportBack: '← Rediger mer',
+  exportWake: '☀️ Hold skjermen våken',
+  exportWakeActive: '☀️ Skjermen sover ikke',
 } as const
