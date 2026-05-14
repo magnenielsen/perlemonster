@@ -65,14 +65,11 @@ export const t = {
   ],
 
   subjects: [
-    { id: 'dyr',      label: 'Dyr 🐱' },
-    { id: 'monster',  label: 'Monster 👹' },
-    { id: 'mat',      label: 'Mat 🍕' },
-    { id: 'romvesen', label: 'Romvesen 👽' },
-    { id: 'eventyr',  label: 'Eventyr 🦄' },
-    { id: 'kjøretøy', label: 'Kjøretøy 🚀' },
-    { id: 'natur',    label: 'Natur 🌸' },
-    { id: 'robot',    label: 'Robot 🤖' },
+    { id: 'dyr',     label: 'Dyr 🐱' },
+    { id: 'monster', label: 'Monster 👹' },
+    { id: 'mat',     label: 'Mat 🍕' },
+    { id: 'natur',   label: 'Natur 🌸' },
+    { id: 'robot',   label: 'Robot 🤖' },
   ],
 
   // Edit
