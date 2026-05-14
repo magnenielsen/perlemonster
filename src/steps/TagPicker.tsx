@@ -20,7 +20,7 @@ async function imageBase64ToGrid(
   imageBase64: string,
   rows: number,
   cols: number,
-  colorCount: number,
+  colorCount: 8 | 15 | 30,
 ): Promise<{ grid: ParsedPattern['grid']; palette: ParsedPattern['palette'] }> {
   const img = new Image()
   img.src = imageBase64
