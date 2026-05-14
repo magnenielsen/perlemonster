@@ -29,13 +29,60 @@ async function imageBase64ToGrid(
     img.onerror = () => reject(new Error('image load failed'))
   })
 
-  // Scale full image to working canvas — background color is part of the design
+  // Draw full image so we can inspect pixels
+  const full = document.createElement('canvas')
+  full.width = img.width; full.height = img.height
+  const fullCtx = full.getContext('2d')!
+  fullCtx.drawImage(img, 0, 0)
+  const { data, width, height } = fullCtx.getImageData(0, 0, img.width, img.height)
+
+  // Sample a small block at each corner to determine background color
+  const sampleCorner = (cx: number, cy: number) => {
+    let r = 0, g = 0, b = 0
+    for (let dy = 0; dy < 5; dy++) for (let dx = 0; dx < 5; dx++) {
+      const i = ((cy + dy) * width + (cx + dx)) * 4
+      r += data[i]; g += data[i + 1]; b += data[i + 2]
+    }
+    return [r / 25, g / 25, b / 25]
+  }
+  const corners = [
+    sampleCorner(0, 0), sampleCorner(width - 6, 0),
+    sampleCorner(0, height - 6), sampleCorner(width - 6, height - 6),
+  ]
+  const bgR = corners.reduce((s, c) => s + c[0], 0) / 4
+  const bgG = corners.reduce((s, c) => s + c[1], 0) / 4
+  const bgB = corners.reduce((s, c) => s + c[2], 0) / 4
+
+  // Find bounding box of pixels that differ significantly from the background
+  let minX = width, maxX = 0, minY = height, maxY = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      const diff = Math.abs(data[i] - bgR) + Math.abs(data[i + 1] - bgG) + Math.abs(data[i + 2] - bgB)
+      if (diff > 90) {
+        if (x < minX) minX = x; if (x > maxX) maxX = x
+        if (y < minY) minY = y; if (y > maxY) maxY = y
+      }
+    }
+  }
+
+  // Fall back to full image if nothing detected
+  if (minX >= maxX || minY >= maxY) { minX = 0; maxX = width - 1; minY = 0; maxY = height - 1 }
+
+  // Add a small border so the background color shows as a thin frame
+  const pad = Math.floor(Math.min(width, height) * 0.05)
+  minX = Math.max(0, minX - pad); maxX = Math.min(width - 1, maxX + pad)
+  minY = Math.max(0, minY - pad); maxY = Math.min(height - 1, maxY + pad)
+
+  // Scale cropped subject to fill working canvas, filling with background color
   const out = document.createElement('canvas')
   out.width = 512; out.height = 512
   const outCtx = out.getContext('2d')!
+  outCtx.fillStyle = `rgb(${Math.round(bgR)},${Math.round(bgG)},${Math.round(bgB)})`
+  outCtx.fillRect(0, 0, 512, 512)
   outCtx.imageSmoothingEnabled = true
   outCtx.imageSmoothingQuality = 'high'
-  outCtx.drawImage(img, 0, 0, 512, 512)
+  outCtx.drawImage(full, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, 512, 512)
 
   const imageData = outCtx.getImageData(0, 0, 512, 512)
   const result = quantizeImageData(imageData, colorCount, 'skarp', rows, cols)
