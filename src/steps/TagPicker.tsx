@@ -12,8 +12,8 @@ const SIZE_MAP = {
   large:    { rows: 29, cols: 29 },
 }
 
-const COLOR_COUNT: Record<'small' | 'portrait' | 'square' | 'large', number> = {
-  small: 5, portrait: 7, square: 7, large: 9,
+const COLOR_COUNT: Record<'small' | 'portrait' | 'square' | 'large', 8 | 15 | 30> = {
+  small: 8, portrait: 8, square: 8, large: 15,
 }
 
 async function imageBase64ToGrid(
