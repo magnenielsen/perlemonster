@@ -40,9 +40,10 @@ export const t = {
   tagSubjectLabel: 'Velg motiv',
   tagSizeLabel: 'Velg størrelse',
   sizes: [
-    { id: 'small',  label: 'Liten',  desc: '11×11 perler' },
-    { id: 'medium', label: 'Medium', desc: '19×19 perler' },
-    { id: 'large',  label: 'Stor',   desc: '29×29 perler' },
+    { id: 'small',    label: 'Liten',     desc: '11×11' },
+    { id: 'portrait', label: 'Portrett',  desc: '13×21' },
+    { id: 'square',   label: 'Kvadrat',   desc: '19×19' },
+    { id: 'large',    label: 'Stor',      desc: '29×29' },
   ] as { id: string; label: string; desc: string }[],
   tagGenerate: 'Lag idé! ✨',
   tagGenerating: 'Perlemonsteret tegner…',

@@ -5,7 +5,12 @@ import { perlerColors } from './palette.js'
 // --- Closed vocabularies ---
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul', 'magisk', 'snill'])
 const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'romvesen', 'eventyr', 'kjøretøy', 'natur', 'robot'])
-const SIZE_MAP: Record<string, number> = { small: 11, medium: 19, large: 29 }
+const SIZE_MAP: Record<string, { rows: number; cols: number }> = {
+  small:    { rows: 11, cols: 11 },
+  portrait: { rows: 21, cols: 13 },
+  square:   { rows: 19, cols: 19 },
+  large:    { rows: 29, cols: 29 },
+}
 
 // --- Simple in-memory rate limiter (resets on cold start; good enough for edge) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -27,11 +32,11 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 }
 
 
-function buildSystemPrompt(n: number): string {
-  const total = n * n
-  const colors = n <= 11 ? '3-5' : n <= 19 ? '4-7' : '6-10'
-  const margin = n <= 11 ? '1' : '2'
-  return `You are a pixel-art designer making ${n}×${n} Perler bead patterns for children aged 7–10.
+function buildSystemPrompt(rows: number, cols: number): string {
+  const total = rows * cols
+  const maxColors = Math.min(rows, cols) <= 11 ? '3-5' : Math.min(rows, cols) <= 19 ? '4-7' : '6-10'
+  const margin = Math.min(rows, cols) <= 11 ? '1' : '2'
+  return `You are a pixel-art designer making ${rows}×${cols} Perler bead patterns (${rows} rows, ${cols} columns) for children aged 7–10.
 
 Think like a simple emoji or icon — bold, graphic, instantly recognisable. Study how kandi bead patterns work: solid colour fills, single-pixel outlines, zero background detail, maximum contrast.
 
@@ -39,15 +44,15 @@ Output ONLY valid JSON matching this schema:
 {
   "title": "<short Norwegian title, max 30 chars>",
   "palette": [{"idx": 0, "name": "<Perler name>", "code": "<Perler code>", "hex": "#RRGGBB"}, ...],
-  "grid": "<${n} lines of exactly ${n} chars each, palette index A-Z, newline-separated>"
+  "grid": "<${rows} lines of exactly ${cols} chars each, palette index A-Z, newline-separated>"
 }
 
 Grid rules — follow exactly:
-- EXACTLY ${n} rows, EXACTLY ${n} chars per row, total ${total} cells
+- EXACTLY ${rows} rows, EXACTLY ${cols} chars per row, total ${total} cells
 - Palette index chars A–Z (A=background, usually white or light sky)
-- Use ${colors} colours maximum — fewer is better at this size
+- Use ${maxColors} colours maximum — fewer is better at this size
 - Leave ${margin}-cell background border on all sides; centre the subject
-- Subject must fill most of the interior — no tiny details
+- Subject must fill most of the interior — use the full shape, especially the height
 - Single-pixel outline around the main shape using the darkest colour
 - Solid colour fills only — no dithering, no gradients, no noise
 - Every cell must be intentional; no stray pixels
@@ -88,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (invalidMood !== undefined) return res.status(400).json({ error: 'Invalid mood tag' })
   if (!VALID_SUBJECTS.has(subject)) return res.status(400).json({ error: 'Invalid subject tag' })
   if (typeof size !== 'string' || !SIZE_MAP[size]) return res.status(400).json({ error: 'Invalid size' })
-  const gridSize = SIZE_MAP[size]
+  const { rows: gridRows, cols: gridCols } = SIZE_MAP[size]
 
   // --- Rate limit ---
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? '0.0.0.0'
@@ -105,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // --- Build prompt ---
-  const systemPrompt = buildSystemPrompt(gridSize)
+  const systemPrompt = buildSystemPrompt(gridRows, gridCols)
   const userMessage = `Mood tags: ${(mood as string[]).join(', ')}
 Subject: ${subject}
 
@@ -134,17 +139,15 @@ Generate the pattern.`
     // Validate structure
     if (!parsed.palette || !Array.isArray(parsed.palette)) throw new Error('bad palette')
     if (typeof parsed.grid !== 'string') throw new Error('bad grid')
-    let rows = parsed.grid.split('\n').filter((r: string) => r.length > 0)
-    // Pad or trim row count to exact gridSize
-    while (rows.length < gridSize) rows.push('A'.repeat(gridSize))
-    rows = rows.slice(0, gridSize)
-    // Pad or trim each row to exact size
-    rows = rows.map((r: string) => {
-      if (r.length === gridSize) return r
-      if (r.length > gridSize) return r.slice(0, gridSize)
-      return r + 'A'.repeat(gridSize - r.length)
+    let gridRows2 = parsed.grid.split('\n').filter((r: string) => r.length > 0)
+    while (gridRows2.length < gridRows) gridRows2.push('A'.repeat(gridCols))
+    gridRows2 = gridRows2.slice(0, gridRows)
+    gridRows2 = gridRows2.map((r: string) => {
+      if (r.length === gridCols) return r
+      if (r.length > gridCols) return r.slice(0, gridCols)
+      return r + 'A'.repeat(gridCols - r.length)
     })
-    parsed.grid = rows.join('\n')
+    parsed.grid = gridRows2.join('\n')
 
     // Estimate cost ($0.003/$0.015 per 1k tokens for Sonnet 4.6)
     const inputTokens = response.usage?.input_tokens ?? 3000

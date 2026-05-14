@@ -71,7 +71,7 @@ const MAX_DAILY = 10
 export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [moods, setMoods] = useState<string[]>([])
   const [subject, setSubject] = useState<string | null>(null)
-  const [size, setSize] = useState<'small' | 'medium' | 'large'>('small')
+  const [size, setSize] = useState<'small' | 'portrait' | 'square' | 'large'>('small')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rateLimited, setRateLimited] = useState(false)
@@ -183,7 +183,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
           {t.sizes.map(s => (
             <button
               key={s.id}
-              onClick={() => setSize(s.id as 'small' | 'medium' | 'large')}
+              onClick={() => setSize(s.id as 'small' | 'portrait' | 'square' | 'large')}
               className={`tag-btn flex-1 flex flex-col items-center gap-1 ${size === s.id ? 'selected' : ''}`}
             >
               <span>{s.label}</span>

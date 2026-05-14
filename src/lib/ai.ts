@@ -32,11 +32,11 @@ export async function generatePattern(req: GenerateRequest): Promise<ParsedPatte
     name: p.name,
     hex: p.hex,
   }))
-  const rows = (data.grid as string).split('\n').filter((r: string) => r.length > 0)
-  const size = rows.length
-  const grid: Grid = rows.map(row => {
-    const chars = [...row].slice(0, size)
-    while (chars.length < size) chars.push('A')
+  const rowStrings = (data.grid as string).split('\n').filter((r: string) => r.length > 0)
+  const numCols = rowStrings[0]?.length ?? rowStrings.length
+  const grid: Grid = rowStrings.map(row => {
+    const chars = [...row].slice(0, numCols)
+    while (chars.length < numCols) chars.push('A')
     return chars.map(ch => {
       const idx = ch.charCodeAt(0) - 65
       return Math.max(0, Math.min(idx, palette.length - 1))

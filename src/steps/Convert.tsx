@@ -14,10 +14,15 @@ interface ConvertProps {
 export function Convert({ croppedCanvas, onDone, onBack }: ConvertProps) {
   const [colorCount, setColorCount] = useState<8 | 15 | 30>(8)
   const [style, setStyle] = useState<'glatt' | 'skarp'>('skarp')
-  const [size, setSize] = useState<'small' | 'medium' | 'large'>('small')
+  const [size, setSize] = useState<'small' | 'portrait' | 'square' | 'large'>('small')
   const [converting, setConverting] = useState(false)
 
-  const SIZE_MAP = { small: 11, medium: 19, large: 29 }
+  const SIZE_MAP = {
+    small:    { rows: 11, cols: 11 },
+    portrait: { rows: 21, cols: 13 },
+    square:   { rows: 19, cols: 19 },
+    large:    { rows: 29, cols: 29 },
+  }
 
   const handleConvert = async () => {
     setConverting(true)
@@ -30,7 +35,7 @@ export function Convert({ croppedCanvas, onDone, onBack }: ConvertProps) {
       imageData = floydSteinberg(imageData)
     }
 
-    const result = quantizeImageData(imageData, colorCount, style, SIZE_MAP[size])
+    const result = quantizeImageData(imageData, colorCount, style, SIZE_MAP[size].rows, SIZE_MAP[size].cols)
     setConverting(false)
     onDone(result)
   }

@@ -66,7 +66,8 @@ export function quantizeImageData(
   imageData: ImageData,
   colorCount: 8 | 15 | 30,
   _style: 'glatt' | 'skarp',
-  gridSize: number = 29
+  gridRows: number = 29,
+  gridCols: number = gridRows
 ): QuantizeResult {
   const { data, width, height } = imageData
   const pixels: [number, number, number][] = []
@@ -91,13 +92,13 @@ export function quantizeImageData(
   // Area averaging: each output cell takes the majority-vote Perler colour
   // from the source pixels in its region — much more accurate than center-pixel sampling
   const grid: Grid = []
-  for (let row = 0; row < gridSize; row++) {
+  for (let row = 0; row < gridRows; row++) {
     const rowArr: number[] = []
-    for (let col = 0; col < gridSize; col++) {
-      const x0 = Math.floor(col * width / gridSize)
-      const x1 = Math.max(x0 + 1, Math.floor((col + 1) * width / gridSize))
-      const y0 = Math.floor(row * height / gridSize)
-      const y1 = Math.max(y0 + 1, Math.floor((row + 1) * height / gridSize))
+    for (let col = 0; col < gridCols; col++) {
+      const x0 = Math.floor(col * width / gridCols)
+      const x1 = Math.max(x0 + 1, Math.floor((col + 1) * width / gridCols))
+      const y0 = Math.floor(row * height / gridRows)
+      const y1 = Math.max(y0 + 1, Math.floor((row + 1) * height / gridRows))
 
       const votes = new Map<number, number>()
       for (let py = y0; py < y1; py++) {
