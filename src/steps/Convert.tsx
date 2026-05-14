@@ -65,7 +65,7 @@ export function Convert({ croppedCanvas, onDone, onBack }: ConvertProps) {
                 {t.sizes.map(s => (
                   <button
                     key={s.id}
-                    onClick={() => setSize(s.id as 'small' | 'medium' | 'large')}
+                    onClick={() => setSize(s.id as 'small' | 'portrait' | 'square' | 'large')}
                     className="tag-btn flex-1 flex flex-col items-center gap-1"
                     style={size === s.id ? { borderColor: '#FF6B6B', background: '#FFF0F0', color: '#FF6B6B' } : {}}
                   >
