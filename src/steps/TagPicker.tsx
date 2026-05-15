@@ -69,7 +69,7 @@ async function imageBase64ToGrid(
   if (minX >= maxX || minY >= maxY) { minX = 0; maxX = width - 1; minY = 0; maxY = height - 1 }
 
   // Add a small border so the background color shows as a thin frame
-  const pad = Math.floor(Math.min(width, height) * 0.05)
+  const pad = Math.floor(Math.min(width, height) * 0.03)
   minX = Math.max(0, minX - pad); maxX = Math.min(width - 1, maxX + pad)
   minY = Math.max(0, minY - pad); maxY = Math.min(height - 1, maxY + pad)
 

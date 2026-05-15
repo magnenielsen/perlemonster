@@ -24,20 +24,29 @@ const MOOD_PROMPTS: Record<string, string> = {
   kul:     'cool and confident',
 }
 
+const FRAMING_BY_SIZE: Record<string, string> = {
+  portrait: 'Close-up head and shoulders portrait. Giant face fills the frame. No body below the shoulders.',
+  square:   'Extreme close-up of the face only. Face fills the entire frame edge to edge. No body.',
+  large:    'Full chibi body, but head is very large — at least half the total height.',
+}
+
 const COMPLEXITY_BY_SIZE: Record<string, string> = {
-  portrait: '3 or 4 flat color regions. Large head fills top two-thirds, tiny body below.',
-  square:   '4 or 5 flat color regions. Face centered, eyes take up at least one-third of the face.',
-  large:    '5 or 6 flat color regions. Full chibi body, expressive face with large eyes dominant.',
+  portrait: '3 or 4 flat color regions.',
+  square:   '4 or 5 flat color regions.',
+  large:    '5 or 6 flat color regions.',
 }
 
 function buildFluxPrompt(moods: string[], subject: string, size: string): string {
   const moodDesc = moods.map(m => MOOD_PROMPTS[m] ?? m).join(', ')
   const subjectDesc = SUBJECT_PROMPTS[subject] ?? subject
+  const framing = FRAMING_BY_SIZE[size] ?? FRAMING_BY_SIZE.square
   const complexity = COMPLEXITY_BY_SIZE[size] ?? COMPLEXITY_BY_SIZE.square
   return (
     `${moodDesc} ${subjectDesc}. Chibi kawaii pixel art sprite. ` +
-    `Solid medium gray background. Subject centered, filling most of the frame. ` +
+    `${framing} ` +
+    `Solid medium gray background. ` +
     `${complexity} ` +
+    `Huge expressive eyes taking up one third of the face. Visible mouth with clear smile or expression. ` +
     `Very bold black outline. Flat solid colors only, no shading, no gradients, no anti-aliasing. ` +
     `Designed for kids. Classic cute cartoon style.`
   )
