@@ -10,11 +10,11 @@ const SIZE_MAP: Record<string, { rows: number; cols: number; aspect: string }> =
 }
 
 const SUBJECT_PROMPTS: Record<string, string> = {
-  dyr:     'chibi animal character with a huge round head and giant sparkling eyes',
-  monster: 'chibi cartoon monster with an oversized head, giant googly eyes, and a wide goofy grin',
-  mat:     'chibi food character with a cute smiling face, big round eyes, and tiny arms',
-  natur:   'chibi flower or leaf character with a big happy face and huge eyes',
-  robot:   'chibi robot with a large square head, giant glowing round eyes, and stubby arms',
+  dyr:     'chibi animal face portrait, perfectly round head, two giant black dot eyes, thick bold U-shaped smile',
+  monster: 'chibi monster face portrait, round head, giant googly eyes, wide open grinning mouth showing thick bold teeth',
+  mat:     'chibi food face portrait, round shape, two big dot eyes, thick bold curved happy smile',
+  natur:   'chibi flower face portrait, round center, big eyes, thick bold smile',
+  robot:   'chibi robot face portrait, square head, large circular eyes, thick bold rectangular smile',
 }
 
 const MOOD_PROMPTS: Record<string, string> = {
@@ -25,9 +25,9 @@ const MOOD_PROMPTS: Record<string, string> = {
 }
 
 const FRAMING_BY_SIZE: Record<string, string> = {
-  portrait: 'Close-up head and shoulders portrait. Giant face fills the frame. No body below the shoulders.',
-  square:   'Extreme close-up of the face only. Face fills the entire frame edge to edge. No body.',
-  large:    'Full chibi body, but head is very large — at least half the total height.',
+  portrait: 'Head and upper chest only. No arms, no body below chest. Face fills top three-quarters of frame.',
+  square:   'Face portrait only. Round face fills the entire frame. Cropped at chin and top of head. Absolutely no body, no arms, no hands visible.',
+  large:    'Full chibi body. Head takes up at least half the total height. Face features clearly visible.',
 }
 
 const COMPLEXITY_BY_SIZE: Record<string, string> = {
@@ -46,7 +46,7 @@ function buildFluxPrompt(moods: string[], subject: string, size: string): string
     `${framing} ` +
     `Solid medium gray background. ` +
     `${complexity} ` +
-    `Huge expressive eyes taking up one third of the face. Visible mouth with clear smile or expression. ` +
+    `Huge expressive eyes taking up one third of the face. Mouth is thick and bold, at least 3 pixels tall, clearly visible. ` +
     `Very bold black outline. Flat solid colors only, no shading, no gradients, no anti-aliasing. ` +
     `Designed for kids. Classic cute cartoon style.`
   )
