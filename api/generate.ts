@@ -10,37 +10,36 @@ const SIZE_MAP: Record<string, { rows: number; cols: number; aspect: string }> =
 }
 
 const SUBJECT_PROMPTS: Record<string, string> = {
-  dyr:     'cute animal face',
-  monster: 'cute cartoon monster face',
-  mat:     'food item',
-  natur:   'nature element like a flower or leaf',
-  robot:   'cute robot',
+  dyr:     'chibi animal character with a huge round head and giant sparkling eyes',
+  monster: 'chibi cartoon monster with an oversized head, giant googly eyes, and a wide goofy grin',
+  mat:     'chibi food character with a cute smiling face, big round eyes, and tiny arms',
+  natur:   'chibi flower or leaf character with a big happy face and huge eyes',
+  robot:   'chibi robot with a large square head, giant glowing round eyes, and stubby arms',
 }
 
 const MOOD_PROMPTS: Record<string, string> = {
-  søt:     'cute and sweet',
-  morsom:  'funny and silly',
-  skummel: 'spooky and scary',
-  kul:     'cool',
+  søt:     'sweet and adorable',
+  morsom:  'funny and goofy',
+  skummel: 'spooky and wide-eyed',
+  kul:     'cool and confident',
 }
 
 const COMPLEXITY_BY_SIZE: Record<string, string> = {
-  portrait: 'Simple character shape, 3 or 4 flat color regions, bold chunky body proportions.',
-  square:   'Simple sprite, 4 or 5 flat color regions, chunky bold shapes.',
-  large:    'Clear detailed sprite, 5 or 6 flat color regions, instantly recognizable silhouette.',
+  portrait: '3 or 4 flat color regions. Large head fills top two-thirds, tiny body below.',
+  square:   '4 or 5 flat color regions. Face centered, eyes take up at least one-third of the face.',
+  large:    '5 or 6 flat color regions. Full chibi body, expressive face with large eyes dominant.',
 }
 
 function buildFluxPrompt(moods: string[], subject: string, size: string): string {
   const moodDesc = moods.map(m => MOOD_PROMPTS[m] ?? m).join(', ')
   const subjectDesc = SUBJECT_PROMPTS[subject] ?? subject
-  const complexity = COMPLEXITY_BY_SIZE[size] ?? COMPLEXITY_BY_SIZE.small
+  const complexity = COMPLEXITY_BY_SIZE[size] ?? COMPLEXITY_BY_SIZE.square
   return (
-    `${moodDesc} ${subjectDesc}, pixel art bead pattern sprite. ` +
-    `Solid medium gray background fills the entire image. Subject centered with a small gray border. ` +
+    `${moodDesc} ${subjectDesc}. Chibi kawaii pixel art sprite. ` +
+    `Solid medium gray background. Subject centered, filling most of the frame. ` +
     `${complexity} ` +
-    `Bold black outline around subject. Flat solid colors only. ` +
-    `No shading, no gradients, no anti-aliasing, no thin lines, no textures. ` +
-    `Classic 8-bit NES game sprite style.`
+    `Very bold black outline. Flat solid colors only, no shading, no gradients, no anti-aliasing. ` +
+    `Designed for kids. Classic cute cartoon style.`
   )
 }
 
