@@ -71,7 +71,7 @@ export const t = {
 
   // Edit
   editTitle: 'Rediger mønster',
-  editReferenceImage: 'Referansebilde fra AI',
+  editReferenceImage: 'Dette tegnet Perlemonsteret til deg!',
   editUndo: '↩ Angre',
   editRedo: '↪ Gjenta',
   editReset: '🔄 Start på nytt',
