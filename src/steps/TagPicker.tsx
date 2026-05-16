@@ -151,6 +151,7 @@ const MAX_DAILY = 10
 
 export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const [moods, setMoods] = useState<string[]>([])
+  const [theme, setTheme] = useState<string | null>(null)
   const [subject, setSubject] = useState<string | null>(null)
   const [size, setSize] = useState<'portrait' | 'square' | 'large'>('square')
   const [loading, setLoading] = useState(false)
@@ -174,6 +175,16 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const toggleMood = (id: string) => {
     setMoods(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
   }
+
+  const selectTheme = (id: string) => {
+    const next = theme === id ? null : id
+    setTheme(next)
+    setSubject(null) // reset subject when theme changes
+  }
+
+  const activeSubjects = theme
+    ? (t.themes.find(th => th.id === theme)?.subjects ?? t.subjects)
+    : t.subjects
 
   const generate = async (isBust = false) => {
     if (moods.length === 0 || !subject) return
@@ -241,13 +252,33 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
         {moods.length === 0 && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagMoodRequired}</p>}
       </div>
 
+      {/* Theme (optional) */}
+      {t.themes.length > 0 && (
+        <div className="w-full max-w-xl">
+          <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
+            {t.tagThemeLabel}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {t.themes.map(th => (
+              <button
+                key={th.id}
+                onClick={() => selectTheme(th.id)}
+                className={`tag-btn ${theme === th.id ? 'selected' : ''}`}
+              >
+                {th.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Subject */}
       <div className="w-full max-w-xl">
         <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
           {t.tagSubjectLabel}
         </p>
         <div className="flex flex-wrap gap-3">
-          {t.subjects.map(s => (
+          {activeSubjects.map(s => (
             <button
               key={s.id}
               onClick={() => setSubject(s.id)}

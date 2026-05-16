@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul'])
-const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'natur', 'robot'])
+const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'natur', 'robot', 'flagg', 'bunad', 'is', 'korps', 'ballong'])
 
 const SIZE_MAP: Record<string, { rows: number; cols: number; aspect: string }> = {
   portrait: { rows: 21, cols: 13, aspect: '2:3' },
@@ -15,6 +15,12 @@ const SUBJECT_PROMPTS: Record<string, string> = {
   mat:     'chibi food face portrait, round shape, two big dot eyes, thick bold curved happy smile',
   natur:   'chibi flower face portrait, round center, big eyes, thick bold smile',
   robot:   'chibi robot face portrait, square head, large circular eyes, thick bold rectangular smile',
+  // 17. mai
+  flagg:   'chibi Norwegian flag, bold red white and blue cross, simple flat graphic, fills the frame',
+  bunad:   'chibi character face wearing a colorful Norwegian bunad folk costume with embroidery, big round head, huge eyes, thick smile',
+  is:      'chibi ice cream cone face portrait, two big dot eyes on the scoop, thick bold smile, bright cheerful colors',
+  korps:   'chibi character face portrait wearing a marching band uniform and hat, huge eyes, rosy cheeks, thick smile',
+  ballong: 'chibi round balloon face portrait, big cute dot eyes, thick bold smile, bright single color balloon',
 }
 
 const MOOD_PROMPTS: Record<string, string> = {
