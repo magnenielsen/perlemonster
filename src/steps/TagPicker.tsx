@@ -236,23 +236,25 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
       </h1>
 
       {/* Mood — hidden when a theme is selected */}
-      {!theme && <div className="w-full max-w-xl">
-        <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
-          {t.tagMoodLabel}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {t.moods.map(m => (
-            <button
-              key={m.id}
-              onClick={() => toggleMood(m.id)}
-              className={`tag-btn ${moods.includes(m.id) ? 'selected' : ''}`}
-            >
-              {m.label}
-            </button>
-          ))}
+      {theme === null && (
+        <div className="w-full max-w-xl">
+          <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
+            {t.tagMoodLabel}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {t.moods.map(m => (
+              <button
+                key={m.id}
+                onClick={() => toggleMood(m.id)}
+                className={`tag-btn ${moods.includes(m.id) ? 'selected' : ''}`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          {moods.length === 0 && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagMoodRequired}</p>}
         </div>
-        {moods.length === 0 && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagMoodRequired}</p>}
-      </div>}
+      )}
 
       {/* Theme (optional) */}
       {t.themes.length > 0 && (
