@@ -179,21 +179,20 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const selectTheme = (id: string) => {
     const next = theme === id ? null : id
     setTheme(next)
-    setSubject(null) // reset subject when theme changes
+    setSubject(null) // clear any subject when toggling theme
   }
 
-  const activeSubjects = theme
-    ? (t.themes.find(th => th.id === theme)?.subjects ?? t.subjects)
-    : t.subjects
+  // The effective subject: theme ID takes precedence over subject picker
+  const effectiveSubject = theme ?? subject
 
   const generate = async (isBust = false) => {
-    if (moods.length === 0 || !subject) return
+    if (moods.length === 0 || !effectiveSubject) return
     setLoading(true)
     setError(null)
 
     const attempt = async (retry: boolean): Promise<ParsedPattern> => {
       try {
-        const { imageBase64 } = await generatePattern({ mood: moods, subject, size, bust: isBust || retry })
+        const { imageBase64 } = await generatePattern({ mood: moods, subject: effectiveSubject, size, bust: isBust || retry })
         const { rows, cols } = SIZE_MAP[size]
         const colorCount = COLOR_COUNT[size]
         const { grid, palette } = await imageBase64ToGrid(imageBase64, rows, cols, colorCount)
@@ -210,7 +209,9 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
       saveUsage(dailyUsed + 1)
       setLoading(false)
       const moodLabels = moods.map(id => t.moods.find(m => m.id === id)?.label ?? id).join(', ')
-      const subjectLabel = t.subjects.find(s => s.id === subject)?.label ?? subject
+      const subjectLabel = t.themes.find(th => th.id === effectiveSubject)?.label
+        ?? t.subjects.find(s => s.id === effectiveSubject)?.label
+        ?? effectiveSubject
       onDone({ ...result, title: `${moodLabels} · ${subjectLabel}` })
     } catch (e) {
       setLoading(false)
@@ -223,7 +224,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
     }
   }
 
-  const canGenerate = moods.length > 0 && subject !== null && !rateLimited
+  const canGenerate = moods.length > 0 && effectiveSubject !== null && !rateLimited
 
   if (loading) return <LoadingScreen />
 
@@ -272,24 +273,26 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
         </div>
       )}
 
-      {/* Subject */}
-      <div className="w-full max-w-xl">
-        <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
-          {t.tagSubjectLabel}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {activeSubjects.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSubject(s.id)}
-              className={`tag-btn ${subject === s.id ? 'selected' : ''}`}
-            >
-              {s.label}
-            </button>
-          ))}
+      {/* Subject — hidden when a theme is selected */}
+      {!theme && (
+        <div className="w-full max-w-xl">
+          <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
+            {t.tagSubjectLabel}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {t.subjects.map(s => (
+              <button
+                key={s.id}
+                onClick={() => setSubject(s.id)}
+                className={`tag-btn ${subject === s.id ? 'selected' : ''}`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          {!subject && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagSubjectRequired}</p>}
         </div>
-        {!subject && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagSubjectRequired}</p>}
-      </div>
+      )}
 
       {/* Size */}
       <div className="w-full max-w-xl">

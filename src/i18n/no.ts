@@ -42,18 +42,8 @@ export const t = {
   tagSizeLabel: 'Velg størrelse',
 
   themes: [
-    {
-      id: 'mai17',
-      label: '17. mai 🇳🇴',
-      subjects: [
-        { id: 'flagg',   label: 'Flagg 🇳🇴' },
-        { id: 'bunad',   label: 'Bunad 👘' },
-        { id: 'is',      label: 'Is 🍦' },
-        { id: 'korps',   label: 'Korps 🎺' },
-        { id: 'ballong', label: 'Ballong 🎈' },
-      ],
-    },
-  ] as { id: string; label: string; subjects: { id: string; label: string }[] }[],
+    { id: 'mai17', label: '17. mai 🇳🇴' },
+  ] as { id: string; label: string }[],
   sizes: [
     { id: 'portrait', label: 'Portrett',  desc: '13×21' },
     { id: 'square',   label: 'Kvadrat',   desc: '19×19' },
