@@ -186,13 +186,14 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
   const effectiveSubject = theme ?? subject
 
   const generate = async (isBust = false) => {
-    if (moods.length === 0 || !effectiveSubject) return
+    if (!effectiveSubject) return
+    const activeMoods = moods.length > 0 ? moods : ['søt']
     setLoading(true)
     setError(null)
 
     const attempt = async (retry: boolean): Promise<ParsedPattern> => {
       try {
-        const { imageBase64 } = await generatePattern({ mood: moods, subject: effectiveSubject, size, bust: isBust || retry })
+        const { imageBase64 } = await generatePattern({ mood: activeMoods, subject: effectiveSubject, size, bust: isBust || retry })
         const { rows, cols } = SIZE_MAP[size]
         const colorCount = COLOR_COUNT[size]
         const { grid, palette } = await imageBase64ToGrid(imageBase64, rows, cols, colorCount)
@@ -208,7 +209,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
       const result = await attempt(false)
       saveUsage(dailyUsed + 1)
       setLoading(false)
-      const moodLabels = moods.map(id => t.moods.find(m => m.id === id)?.label ?? id).join(', ')
+      const moodLabels = activeMoods.map(id => t.moods.find(m => m.id === id)?.label ?? id).join(', ')
       const subjectLabel = t.themes.find(th => th.id === effectiveSubject)?.label
         ?? t.subjects.find(s => s.id === effectiveSubject)?.label
         ?? effectiveSubject
@@ -224,7 +225,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
     }
   }
 
-  const canGenerate = moods.length > 0 && effectiveSubject !== null && !rateLimited
+  const canGenerate = (theme !== null || (moods.length > 0 && subject !== null)) && !rateLimited
 
   if (loading) return <LoadingScreen />
 
@@ -234,8 +235,8 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
         {t.tagPickerTitle}
       </h1>
 
-      {/* Mood */}
-      <div className="w-full max-w-xl">
+      {/* Mood — hidden when a theme is selected */}
+      {!theme && <div className="w-full max-w-xl">
         <p style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '1.2rem', color: '#2D3047', marginBottom: 12 }}>
           {t.tagMoodLabel}
         </p>
@@ -251,7 +252,7 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
           ))}
         </div>
         {moods.length === 0 && <p style={{ color: '#aaa', fontSize: '0.85rem', marginTop: 6 }}>{t.tagMoodRequired}</p>}
-      </div>
+      </div>}
 
       {/* Theme (optional) */}
       {t.themes.length > 0 && (
