@@ -1,8 +1,7 @@
 export interface GenerateRequest {
   mood: string[]
   subject: string
-  size?: 'small' | 'portrait' | 'square' | 'large'
-  bust?: boolean
+  size?: 'portrait' | 'square' | 'large'
 }
 
 export async function generatePattern(req: GenerateRequest): Promise<{ imageBase64: string }> {

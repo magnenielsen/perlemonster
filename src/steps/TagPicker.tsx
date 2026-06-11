@@ -138,35 +138,24 @@ export function TagPicker({ onDone, onBack }: TagPickerProps) {
   // The effective subject: theme ID takes precedence over subject picker
   const effectiveSubject = theme ?? subject
 
-  const generate = async (isBust = false) => {
+  const generate = async () => {
     if (!effectiveSubject) return
     const activeMoods = moods.length > 0 ? moods : ['søt']
     setLoading(true)
     setError(null)
 
-    const attempt = async (retry: boolean): Promise<ParsedPattern> => {
-      try {
-        const { imageBase64 } = await generatePattern({ mood: activeMoods, subject: effectiveSubject, size, bust: isBust || retry })
-        const { rows, cols } = SIZE_MAP[size]
-        const colorCount = COLOR_COUNT[size]
-        const { grid, palette } = await imageBase64ToGrid(imageBase64, rows, cols, colorCount)
-        return { grid, palette, sourceImage: imageBase64 }
-      } catch (e) {
-        if (e instanceof RateLimitError) throw e
-        if (!retry) return attempt(true)
-        throw e
-      }
-    }
-
     try {
-      const result = await attempt(false)
-      saveUsage(dailyUsed + 1)
-      setLoading(false)
+      const { imageBase64 } = await generatePattern({ mood: activeMoods, subject: effectiveSubject, size })
+      const { rows, cols } = SIZE_MAP[size]
+      const colorCount = COLOR_COUNT[size]
+      const { grid, palette } = await imageBase64ToGrid(imageBase64, rows, cols, colorCount)
       const moodLabels = activeMoods.map(id => t.moods.find(m => m.id === id)?.label ?? id).join(', ')
       const subjectLabel = t.themes.find(th => th.id === effectiveSubject)?.label
         ?? t.subjects.find(s => s.id === effectiveSubject)?.label
         ?? effectiveSubject
-      onDone({ ...result, title: `${moodLabels} · ${subjectLabel}` })
+      saveUsage(dailyUsed + 1)
+      setLoading(false)
+      onDone({ grid, palette, sourceImage: imageBase64, title: `${moodLabels} · ${subjectLabel}` })
     } catch (e) {
       setLoading(false)
       if (e instanceof RateLimitError) {
