@@ -42,7 +42,7 @@ export const t = {
   tagSizeLabel: 'Velg størrelse',
 
   themes: [
-    { id: 'mai17', label: '17. mai 🇳🇴' },
+    { id: 'vm', label: 'Fotball-VM ⚽' },
   ] as { id: string; label: string }[],
   sizes: [
     { id: 'portrait', label: 'Portrett',  desc: '13×21' },

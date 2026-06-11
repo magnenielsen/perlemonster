@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const VALID_MOODS = new Set(['søt', 'morsom', 'skummel', 'kul'])
-const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'natur', 'robot', 'mai17'])
+const VALID_SUBJECTS = new Set(['dyr', 'monster', 'mat', 'natur', 'robot', 'vm'])
 
 // width/height sent to rd-plus at 4× the bead grid — each 4×4 pixel block = one bead
 const SIZE_MAP: Record<string, { rows: number; cols: number; width: number; height: number }> = {
@@ -16,7 +16,7 @@ const SUBJECT_PROMPTS: Record<string, string> = {
   mat:     'chibi food character face, round shape, big dot eyes, bold happy smile',
   natur:   'chibi flower face, round center, big eyes, bold smile',
   robot:   'chibi robot face, square head, large circular eyes, bold rectangular smile',
-  mai17:   'chibi Norwegian child in colorful bunad folk costume, huge sparkling eyes, rosy cheeks, bold smile, red white and blue colors',
+  vm:      'chibi football player celebrating a goal, wearing colorful jersey and shorts, kicking a football, big round head, huge eyes, bold smile',
 }
 
 const MOOD_PROMPTS: Record<string, string> = {
@@ -27,9 +27,9 @@ const MOOD_PROMPTS: Record<string, string> = {
 }
 
 const FRAMING_BY_SIZE: Record<string, string> = {
-  portrait: 'head and shoulders portrait, face fills most of the frame',
-  square:   'extreme face close-up, face fills entire frame edge to edge, no body',
-  large:    'full chibi body, large head takes up at least half the height',
+  portrait: 'full chibi body from head to toe, centered, character fills most of the frame',
+  square:   'full chibi body from head to toe, centered, character fills most of the frame',
+  large:    'full detailed chibi body from head to toe, centered, character fills most of the frame',
 }
 
 function buildPrompt(moods: string[], subject: string, size: string): string {
